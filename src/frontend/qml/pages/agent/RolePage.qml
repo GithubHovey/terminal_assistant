@@ -167,6 +167,70 @@ Rectangle {
         }
     }
     
+    Dialog {
+        id: avatarDialog
+        title: "更换头像"
+        modal: true
+        anchors.centerIn: parent
+        
+        ColumnLayout {
+            spacing: 10
+            
+            Text {
+                text: "请选择头像文件:"
+                font.pixelSize: 14
+                color: "#333333"
+            }
+            
+            Button {
+                text: "选择图片"
+                font.pixelSize: 14
+                
+                background: Rectangle {
+                    color: parent.hovered ? "#40A9FF" : "#1890FF"
+                    radius: 4
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: {
+                    console.log("选择头像图片")
+                    avatarDialog.close()
+                }
+            }
+            
+            Button {
+                text: "取消"
+                font.pixelSize: 14
+                
+                background: Rectangle {
+                    color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                    border.color: "#D9D9D9"
+                    border.width: 1
+                    radius: 4
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: "#333333"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: {
+                    avatarDialog.close()
+                }
+            }
+        }
+    }
+    
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -318,9 +382,9 @@ Rectangle {
                 clip: true
                 
                 ColumnLayout {
-                    width: parent.width - 40
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 20
+                    anchors.fill: parent
+                    anchors.margins: 20
+                    spacing: 15
                     
                     RowLayout {
                         Layout.fillWidth: true
@@ -409,62 +473,6 @@ Rectangle {
                             placeholderText: "输入大写英文名"
                             font.pixelSize: 14
                             maximumLength: 8
-                        }
-                        
-                        Text {
-                            text: "智能体地址:"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        TextField {
-                            id: agentUrlEdit
-                            Layout.fillWidth: true
-                            placeholderText: "输入智能体API地址"
-                            font.pixelSize: 14
-                        }
-                        
-                        Text {
-                            text: "智能体ID:"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        TextField {
-                            id: agentIdEdit
-                            Layout.fillWidth: true
-                            placeholderText: "输入智能体ID"
-                            font.pixelSize: 14
-                        }
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: "#F5F5F5"
-                        radius: 4
-                        
-                        Button {
-                            anchors.centerIn: parent
-                            text: "智能体配置与测试"
-                            font.pixelSize: 14
-                            
-                            background: Rectangle {
-                                color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                radius: 4
-                            }
-                            
-                            contentItem: Text {
-                                text: parent.text
-                                font: parent.font
-                                color: "#FFFFFF"
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: {
-                                console.log("打开智能体配置与测试")
-                            }
                         }
                     }
                     
@@ -584,6 +592,76 @@ Rectangle {
                     }
                     
                     Text {
+                        text: "智能体配置"
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: "#333333"
+                    }
+                    
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        rowSpacing: 15
+                        columnSpacing: 20
+                        
+                        Text {
+                            text: "智能体地址:"
+                            font.pixelSize: 14
+                            color: "#333333"
+                        }
+                        
+                        TextField {
+                            id: agentUrlEdit
+                            Layout.fillWidth: true
+                            placeholderText: "输入智能体API地址"
+                            font.pixelSize: 14
+                        }
+                        
+                        Text {
+                            text: "智能体ID:"
+                            font.pixelSize: 14
+                            color: "#333333"
+                        }
+                        
+                        TextField {
+                            id: agentIdEdit
+                            Layout.fillWidth: true
+                            placeholderText: "输入智能体ID"
+                            font.pixelSize: 14
+                        }
+                    }
+                    
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 40
+                        color: "#F5F5F5"
+                        radius: 4
+                        
+                        Button {
+                            anchors.centerIn: parent
+                            text: "智能体配置与测试"
+                            font.pixelSize: 14
+                            
+                            background: Rectangle {
+                                color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                radius: 4
+                            }
+                            
+                            contentItem: Text {
+                                text: parent.text
+                                font: parent.font
+                                color: "#FFFFFF"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            
+                            onClicked: {
+                                console.log("打开智能体配置与测试")
+                            }
+                        }
+                    }
+                    
+                    Text {
                         text: "参考提示词"
                         font.pixelSize: 16
                         font.bold: true
@@ -593,7 +671,8 @@ Rectangle {
                     TextArea {
                         id: promptEdit
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 120
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 120
                         placeholderText: "输入参考提示词..."
                         font.pixelSize: 14
                         wrapMode: TextArea.Wrap
@@ -630,16 +709,8 @@ Rectangle {
                         Item {
                             Layout.fillWidth: true
                         }
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 50
-                        color: "#F5F5F5"
-                        radius: 4
                         
                         Button {
-                            anchors.centerIn: parent
                             text: "生成NFC信息"
                             font.pixelSize: 14
                             
@@ -661,74 +732,6 @@ Rectangle {
                             }
                         }
                     }
-                    
-                    Item {
-                        Layout.preferredHeight: 20
-                    }
-                }
-            }
-        }
-    }
-    
-    Dialog {
-        id: avatarDialog
-        title: "更换头像"
-        modal: true
-        anchors.centerIn: parent
-        
-        ColumnLayout {
-            spacing: 10
-            
-            Text {
-                text: "请选择头像文件:"
-                font.pixelSize: 14
-                color: "#333333"
-            }
-            
-            Button {
-                text: "选择图片"
-                font.pixelSize: 14
-                
-                background: Rectangle {
-                    color: parent.hovered ? "#40A9FF" : "#1890FF"
-                    radius: 4
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    font: parent.font
-                    color: "#FFFFFF"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                
-                onClicked: {
-                    console.log("选择头像图片")
-                    avatarDialog.close()
-                }
-            }
-            
-            Button {
-                text: "取消"
-                font.pixelSize: 14
-                
-                background: Rectangle {
-                    color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
-                    border.color: "#D9D9D9"
-                    border.width: 1
-                    radius: 4
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    font: parent.font
-                    color: "#333333"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                
-                onClicked: {
-                    avatarDialog.close()
                 }
             }
         }
