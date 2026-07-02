@@ -6,6 +6,8 @@ Rectangle {
     id: root
     color: "#F5F5F5"
     
+    property int currentIndex: 0
+    
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -32,7 +34,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 40
-                        color: navListView.currentIndex === index ? "#1890FF" : (mouseArea.containsMouse ? "#E6F7FF" : "transparent")
+                        color: root.currentIndex === index ? "#1890FF" : (mouseArea.containsMouse ? "#E6F7FF" : "transparent")
                         radius: 4
                         
                         RowLayout {
@@ -43,13 +45,13 @@ Rectangle {
                             Text {
                                 text: modelData.icon
                                 font.pixelSize: 16
-                                color: navListView.currentIndex === index ? "#FFFFFF" : "#333333"
+                                color: root.currentIndex === index ? "#FFFFFF" : "#333333"
                             }
                             
                             Text {
                                 text: modelData.name
                                 font.pixelSize: 14
-                                color: navListView.currentIndex === index ? "#FFFFFF" : "#333333"
+                                color: root.currentIndex === index ? "#FFFFFF" : "#333333"
                                 Layout.fillWidth: true
                             }
                         }
@@ -59,7 +61,7 @@ Rectangle {
                             anchors.fill: parent
                             hoverEnabled: true
                             onClicked: {
-                                navListView.currentIndex = index
+                                root.currentIndex = index
                             }
                         }
                     }
@@ -68,13 +70,6 @@ Rectangle {
                 Item {
                     Layout.fillHeight: true
                 }
-            }
-            
-            ListView {
-                id: navListView
-                anchors.fill: parent
-                visible: false
-                currentIndex: 0
             }
         }
         
@@ -85,7 +80,7 @@ Rectangle {
             
             StackLayout {
                 anchors.fill: parent
-                currentIndex: navListView.currentIndex
+                currentIndex: root.currentIndex
                 
                 AccountPage {}
                 HotWordsPage {}
