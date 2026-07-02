@@ -406,20 +406,12 @@ Rectangle {
                                 font.bold: true
                                 color: "#FFFFFF"
                             }
-                            
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    avatarDialog.open()
-                                }
-                            }
                         }
                         
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
-                            visible: !parent.parent.parent.isCurrentUser
+                            visible: !isCurrentUser
                             
                             Text {
                                 text: "角色名称:"
@@ -461,7 +453,7 @@ Rectangle {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
-                            visible: parent.parent.parent.isCurrentUser
+                            visible: isCurrentUser
                             
                             Text {
                                 text: roleListView.currentItem ? roleListView.model.get(roleListView.currentIndex).roleName : "user"
@@ -470,32 +462,34 @@ Rectangle {
                                 color: "#333333"
                             }
                             
-                            Button {
-                                text: "更换头像"
-                                font.pixelSize: 12
-                                
-                                background: Rectangle {
-                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                    radius: 4
-                                }
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: "#FFFFFF"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                onClicked: {
-                                    avatarDialog.open()
-                                }
-                            }
-                            
                             Text {
-                                text: "用户角色仅需设置头像"
+                                text: "点击头像更换"
                                 font.pixelSize: 12
                                 color: "#999999"
+                            }
+                            
+                            Rectangle {
+                                Layout.preferredWidth: 100
+                                Layout.preferredHeight: 32
+                                radius: 4
+                                color: avatarMouseArea.containsMouse ? "#40A9FF" : "#1890FF"
+                                
+                                MouseArea {
+                                    id: avatarMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        avatarDialog.open()
+                                    }
+                                }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "更换头像"
+                                    font.pixelSize: 12
+                                    color: "#FFFFFF"
+                                }
                             }
                         }
                     }
