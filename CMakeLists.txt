@@ -48,7 +48,7 @@ qt_add_qml_module(DeepSpaceAssistant
         src/frontend/qml/LogPanel.qml
         src/frontend/qml/ApplyButton.qml
         src/frontend/qml/BasicConfigPage.qml
-        src/frontend/qml/AgentConfigPage.qml
+        src/frontend/qml/pages/AgentConfigPage.qml
         src/frontend/qml/RadioConfigPage.qml
         src/frontend/qml/MaintenancePage.qml
         src/frontend/qml/pages/agent/AccountPage.qml
