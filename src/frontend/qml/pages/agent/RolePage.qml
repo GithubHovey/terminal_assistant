@@ -1,16 +1,105 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 Rectangle {
     color: "#FFFFFF"
+    
+    property string newRoleName: ""
+    
+    Dialog {
+        id: addRoleDialog
+        title: "添加角色"
+        modal: true
+        anchors.centerIn: parent
+        
+        ColumnLayout {
+            spacing: 10
+            
+            Text {
+                text: "请输入角色名称:"
+                font.pixelSize: 14
+                color: "#333333"
+            }
+            
+            TextField {
+                id: roleNameInput
+                Layout.preferredWidth: 200
+                placeholderText: "角色名称"
+                font.pixelSize: 14
+                onTextChanged: newRoleName = text
+            }
+            
+            RowLayout {
+                spacing: 10
+                
+                Button {
+                    text: "确定"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        if (newRoleName.trim() !== "") {
+                            roleListView.model.append({ roleName: newRoleName.trim(), canDelete: true })
+                            roleNameInput.text = ""
+                            newRoleName = ""
+                            addRoleDialog.close()
+                        }
+                    }
+                }
+                
+                Button {
+                    text: "取消"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        roleNameInput.text = ""
+                        newRoleName = ""
+                        addRoleDialog.close()
+                    }
+                }
+            }
+        }
+        
+        onOpened: {
+            roleNameInput.forceActiveFocus()
+        }
+    }
     
     RowLayout {
         anchors.fill: parent
         spacing: 0
         
         Rectangle {
-            Layout.preferredWidth: 200
+            Layout.preferredWidth: 120
             Layout.fillHeight: true
             color: "#FAFAFA"
             
@@ -109,7 +198,7 @@ Rectangle {
                         }
                         
                         onClicked: {
-                            roleListView.model.append({ roleName: "新角色", canDelete: true })
+                            addRoleDialog.open()
                         }
                     }
                 }
