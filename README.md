@@ -18,6 +18,8 @@
 terminal_assistant/
 ├── CMakeLists.txt              # CMake构建配置
 ├── README.md                   # 项目说明文档
+├── docs/                       # 文档目录
+│   └ary backend-api.md         # 后端API文档（供前端参考）
 ├── main.cpp                    # 程序入口
 │
 ├── src/
@@ -119,6 +121,20 @@ terminal_assistant/
 - `getLogHistory()` - 获取历史日志
 - `clearLog()` - 清空日志
 
+#### UserSettings (用户设置管理)
+- `apiKey()` - 获取/设置API密钥
+- `isFirstBoot()` - 初次开机标志
+- `roleList()` - 角色信息列表
+- `version()` - 版本号
+- `loadFromFile()` / `saveToFile()` - 文件读写
+
+#### RoleInfo (角色信息)
+- `name()` / `id()` - 名称和编号
+- `avatarBinPath()` - 头像文件路径
+- `agentId()` - Agent ID
+- `voiceCloneId()` - 声音复刻ID
+- `voiceCloneMaterialPath()` - 声音素材路径
+
 ## 构建说明
 
 ### 环境要求
@@ -162,6 +178,7 @@ ninja
 - [ ] Python脚本调用功能
 - [ ] 日志系统集成
 - [ ] 单元测试
+- [ ] UserSettings文件读写实现（JSON格式）
 
 ## 更新日志
 
@@ -177,6 +194,10 @@ ninja
 - 修复ApplyButton.qml cursorShape属性错误
 - 更新qt-build skill添加错误捕获测试方法
 - 修改默认分辨率为1080x720
+
+## 文档
+
+- [后端API文档](docs/backend-api.md) - 详细的后端接口说明，供前端开发参考
 
 ## 许可证
 

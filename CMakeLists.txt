@@ -17,6 +17,8 @@ set(BACKEND_SOURCES
     src/backend/maintenance/MaintenanceManager.cpp
     src/backend/python/PythonRunner.cpp
     src/backend/logger/Logger.cpp
+    src/backend/user/RoleInfo.cpp
+    src/backend/user/UserSettings.cpp
 )
 
 set(BACKEND_HEADERS
@@ -27,6 +29,8 @@ set(BACKEND_HEADERS
     src/backend/maintenance/MaintenanceManager.h
     src/backend/python/PythonRunner.h
     src/backend/logger/Logger.h
+    src/backend/user/RoleInfo.h
+    src/backend/user/UserSettings.h
 )
 
 qt_add_executable(DeepSpaceAssistant
