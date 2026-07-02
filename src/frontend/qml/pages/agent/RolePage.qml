@@ -7,6 +7,7 @@ Rectangle {
     color: "#FFFFFF"
     
     property string newRoleName: ""
+    property int deleteIndex: -1
     
     Dialog {
         id: addRoleDialog
@@ -94,6 +95,78 @@ Rectangle {
         }
     }
     
+    Dialog {
+        id: deleteConfirmDialog
+        title: "确认删除"
+        modal: true
+        anchors.centerIn: parent
+        
+        ColumnLayout {
+            spacing: 10
+            
+            Text {
+                text: "确定要删除该角色吗？"
+                font.pixelSize: 14
+                color: "#333333"
+            }
+            
+            RowLayout {
+                spacing: 10
+                
+                Button {
+                    text: "确定"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#FF4D4F" : "#FF4D4F"
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        if (deleteIndex >= 0) {
+                            roleListView.model.remove(deleteIndex)
+                            deleteIndex = -1
+                            deleteConfirmDialog.close()
+                        }
+                    }
+                }
+                
+                Button {
+                    text: "取消"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        deleteIndex = -1
+                        deleteConfirmDialog.close()
+                    }
+                }
+            }
+        }
+    }
+    
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -135,6 +208,36 @@ Rectangle {
                         width: parent.width
                         height: 90
                         color: roleListView.currentIndex === index ? "#E6F7FF" : (itemMouseArea.containsMouse ? "#F0F0F0" : "transparent")
+                        
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.topMargin: 5
+                            anchors.rightMargin: 5
+                            width: 20
+                            height: 20
+                            radius: 10
+                            color: deleteMouseArea.containsMouse ? "#FF4D4F" : "#FF7875"
+                            visible: canDelete && itemMouseArea.containsMouse
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "×"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: "#FFFFFF"
+                            }
+                            
+                            MouseArea {
+                                id: deleteMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    deleteIndex = index
+                                    deleteConfirmDialog.open()
+                                }
+                            }
+                        }
                         
                         ColumnLayout {
                             anchors.centerIn: parent
