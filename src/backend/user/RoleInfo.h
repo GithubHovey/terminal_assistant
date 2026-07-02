@@ -16,6 +16,9 @@ public:
     int id() const;
     void setId(int id);
 
+    bool isUser() const;
+    void setIsUser(bool isUser);
+
     QString avatarBinPath() const;
     void setAvatarBinPath(const QString &path);
 
@@ -31,6 +34,7 @@ public:
 private:
     QString m_name;
     int m_id;
+    bool m_isUser;
     QString m_avatarBinPath;
     QString m_agentId;
     QString m_voiceCloneId;

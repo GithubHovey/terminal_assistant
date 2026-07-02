@@ -1,13 +1,15 @@
 #include "RoleInfo.h"
 
 RoleInfo::RoleInfo()
-    : m_id(0)
+    : m_id(1)
+    , m_isUser(false)
 {
 }
 
 RoleInfo::RoleInfo(const QString &name, int id)
     : m_name(name)
     , m_id(id)
+    , m_isUser(id == 0)
 {
 }
 
@@ -31,6 +33,20 @@ int RoleInfo::id() const
 void RoleInfo::setId(int id)
 {
     m_id = id;
+    m_isUser = (id == 0);
+}
+
+bool RoleInfo::isUser() const
+{
+    return m_isUser;
+}
+
+void RoleInfo::setIsUser(bool isUser)
+{
+    m_isUser = isUser;
+    if (isUser) {
+        m_id = 0;
+    }
 }
 
 QString RoleInfo::avatarBinPath() const

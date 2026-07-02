@@ -53,13 +53,14 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        if (newRoleName.trim() !== "") {
-                            roleListView.model.append({ roleName: newRoleName.trim(), canDelete: true })
-                            roleNameInput.text = ""
-                            newRoleName = ""
-                            addRoleDialog.close()
+                            if (newRoleName.trim() !== "") {
+                                var newId = roleListView.model.count
+                                roleListView.model.append({ roleName: newRoleName.trim(), roleId: newId, canDelete: true })
+                                roleNameInput.text = ""
+                                newRoleName = ""
+                                addRoleDialog.close()
+                            }
                         }
-                    }
                 }
                 
                 Button {
@@ -265,7 +266,7 @@ Rectangle {
                     clip: true
                     
                     model: ListModel {
-                        ListElement { roleName: "user"; canDelete: false }
+                        ListElement { roleName: "user"; roleId: 0; canDelete: false }
                     }
                     
                     delegate: Rectangle {
@@ -377,6 +378,8 @@ Rectangle {
             Layout.fillHeight: true
             color: "#FFFFFF"
             
+            property bool isCurrentUser: roleListView.currentItem ? (roleListView.model.get(roleListView.currentIndex).roleId === 0) : true
+            
             ScrollView {
                 anchors.fill: parent
                 clip: true
@@ -416,6 +419,7 @@ Rectangle {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
+                            visible: !parent.parent.parent.isCurrentUser
                             
                             Text {
                                 text: "角色名称:"
@@ -453,6 +457,47 @@ Rectangle {
                                 }
                             }
                         }
+                        
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+                            visible: parent.parent.parent.isCurrentUser
+                            
+                            Text {
+                                text: roleListView.currentItem ? roleListView.model.get(roleListView.currentIndex).roleName : "user"
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: "#333333"
+                            }
+                            
+                            Button {
+                                text: "更换头像"
+                                font.pixelSize: 12
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                    radius: 4
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font: parent.font
+                                    color: "#FFFFFF"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                onClicked: {
+                                    avatarDialog.open()
+                                }
+                            }
+                            
+                            Text {
+                                text: "用户角色仅需设置头像"
+                                font.pixelSize: 12
+                                color: "#999999"
+                            }
+                        }
                     }
                     
                     GridLayout {
@@ -460,6 +505,7 @@ Rectangle {
                         columns: 2
                         rowSpacing: 15
                         columnSpacing: 20
+                        visible: !isCurrentUser
                         
                         Text {
                             text: "英文名(SD卡):"
@@ -481,11 +527,13 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
+                        visible: !isCurrentUser
                     }
                     
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
+                        visible: !isCurrentUser
                         
                         Text {
                             text: "模型选择:"
@@ -504,6 +552,7 @@ Rectangle {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 10
+                        visible: !isCurrentUser
                         
                         RowLayout {
                             Layout.fillWidth: true
@@ -614,6 +663,7 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
+                        visible: !isCurrentUser
                     }
                     
                     GridLayout {
@@ -621,6 +671,7 @@ Rectangle {
                         columns: 2
                         rowSpacing: 15
                         columnSpacing: 20
+                        visible: !isCurrentUser
                         
                         Text {
                             text: "智能体地址:"
@@ -654,6 +705,7 @@ Rectangle {
                         Layout.preferredHeight: 40
                         color: "#F5F5F5"
                         radius: 4
+                        visible: !isCurrentUser
                         
                         Button {
                             anchors.centerIn: parent
@@ -684,6 +736,7 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
+                        visible: !isCurrentUser
                     }
                     
                     TextArea {
@@ -694,11 +747,13 @@ Rectangle {
                         placeholderText: "输入参考提示词..."
                         font.pixelSize: 14
                         wrapMode: TextArea.Wrap
+                        visible: !isCurrentUser
                     }
                     
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
+                        visible: !isCurrentUser
                         
                         Button {
                             text: "复制提示词"
