@@ -44,13 +44,13 @@ qt_add_qml_module(DeepSpaceAssistant
     VERSION 1.0
     QML_FILES
         src/frontend/qml/Main.qml
-        src/frontend/qml/CustomTabBar.qml
-        src/frontend/qml/LogPanel.qml
-        src/frontend/qml/ApplyButton.qml
-        src/frontend/qml/BasicConfigPage.qml
+        src/frontend/qml/components/CustomTabBar.qml
+        src/frontend/qml/components/LogPanel.qml
+        src/frontend/qml/components/ApplyButton.qml
+        src/frontend/qml/pages/BasicConfigPage.qml
         src/frontend/qml/pages/AgentConfigPage.qml
-        src/frontend/qml/RadioConfigPage.qml
-        src/frontend/qml/MaintenancePage.qml
+        src/frontend/qml/pages/RadioConfigPage.qml
+        src/frontend/qml/pages/MaintenancePage.qml
         src/frontend/qml/pages/agent/AccountPage.qml
         src/frontend/qml/pages/agent/HotWordsPage.qml
         src/frontend/qml/pages/agent/KnowledgeBasePage.qml
