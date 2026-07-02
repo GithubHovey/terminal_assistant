@@ -13,6 +13,13 @@ ApplicationWindow {
     title: qsTr("深空联合助手")
     color: "#FFFFFF"
 
+    Connections {
+        target: logger
+        function onNewLogEntry(entry) {
+            logPanel.appendLog(entry)
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -152,9 +159,9 @@ ApplicationWindow {
                     id: applyButton
                     Layout.preferredWidth: 120
                     Layout.fillHeight: true
-                    text: qsTr("应用")
+                    text: qsTr("应用到终端SD卡")
                     onClicked: {
-                        console.log("应用按钮被点击")
+                        logger.logInfo("应用按钮被点击")
                     }
                 }
             }

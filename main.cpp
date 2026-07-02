@@ -1,8 +1,10 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QUrl>
 #include <QQuickStyle>
 #include <QFontDatabase>
+#include "src/backend/logger/Logger.h"
 
 using namespace Qt::StringLiterals;
 
@@ -20,7 +22,11 @@ int main(int argc, char *argv[])
     
     QQmlApplicationEngine engine;
     
+    engine.rootContext()->setContextProperty("logger", &Logger::instance());
+    
     engine.loadFromModule(u"App"_s, u"Main"_s);
+    
+    Logger::instance().logInfo("早上好索拉里斯！");
     
     return app.exec();
 }

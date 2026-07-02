@@ -8,6 +8,8 @@ Rectangle {
     
     property string newRoleName: ""
     property int deleteIndex: -1
+    property bool nfcGenerated: false
+    property string nfcResult: ""
     
     Dialog {
         id: addRoleDialog
@@ -393,35 +395,129 @@ Rectangle {
                 clip: true
                 visible: parent.hasSelectedRole
                 
-                ColumnLayout {
+                Item {
                     anchors.fill: parent
                     anchors.margins: 20
-                    spacing: 15
                     
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 20
+                    ColumnLayout {
+                        id: leftColumn
+                        width: parent.width * 0.45 - 15
+                        height: parent.height
+                        anchors.left: parent.left
+                        spacing: 15
                         
-                        Rectangle {
-                            Layout.preferredWidth: 80
-                            Layout.preferredHeight: 80
-                            radius: 40
-                            color: "#CCCCCC"
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 20
                             
-                            Text {
-                                anchors.centerIn: parent
-                                text: roleListView.model.get(roleListView.currentIndex).roleName.charAt(0).toUpperCase()
-                                font.pixelSize: 28
-                                font.bold: true
-                                color: "#FFFFFF"
+                            Rectangle {
+                                Layout.preferredWidth: 80
+                                Layout.preferredHeight: 80
+                                radius: 40
+                                color: "#CCCCCC"
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).roleName.charAt(0).toUpperCase() : ""
+                                    font.pixelSize: 28
+                                    font.bold: true
+                                    color: "#FFFFFF"
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        avatarDialog.open()
+                                    }
+                                }
                             }
                             
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    avatarDialog.open()
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+                                
+                                Text {
+                                    text: "角色名称:"
+                                    font.pixelSize: 14
+                                    color: "#333333"
                                 }
+                                
+                                TextField {
+                                    id: roleNameEdit
+                                    Layout.fillWidth: true
+                                    placeholderText: "输入角色名称"
+                                    font.pixelSize: 14
+                                    text: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).roleName : ""
+                                }
+                                
+                                Button {
+                                    text: "更换头像"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#FFFFFF"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        avatarDialog.open()
+                                    }
+                                }
+                            }
+                        }
+                        
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 2
+                            rowSpacing: 15
+                            columnSpacing: 20
+                            
+                            Text {
+                                text: "英文名(SD卡):"
+                                font.pixelSize: 14
+                                color: "#333333"
+                            }
+                            
+                            TextField {
+                                id: englishNameEdit
+                                Layout.fillWidth: true
+                                placeholderText: "输入大写英文名"
+                                font.pixelSize: 14
+                                maximumLength: 8
+                            }
+                        }
+                        
+                        Text {
+                            text: "声音复刻"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#333333"
+                        }
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+                            
+                            Text {
+                                text: "模型选择:"
+                                font.pixelSize: 14
+                                color: "#333333"
+                            }
+                            
+                            Text {
+                                text: "cosyvoice-v3.5-plus"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: "#1890FF"
                             }
                         }
                         
@@ -429,254 +525,235 @@ Rectangle {
                             Layout.fillWidth: true
                             spacing: 10
                             
-                            Text {
-                                text: "角色名称:"
-                                font.pixelSize: 14
-                                color: "#333333"
-                            }
-                            
-                            TextField {
-                                id: roleNameEdit
+                            RowLayout {
                                 Layout.fillWidth: true
-                                placeholderText: "输入角色名称"
-                                font.pixelSize: 14
-                                text: roleListView.model.get(roleListView.currentIndex).roleName
+                                spacing: 10
+                                
+                                Text {
+                                    text: "素材文件:"
+                                    font.pixelSize: 14
+                                    color: "#333333"
+                                }
+                                
+                                TextField {
+                                    id: voiceMaterialEdit
+                                    Layout.fillWidth: true
+                                    placeholderText: "选择声音复刻素材文件"
+                                    font.pixelSize: 14
+                                    readOnly: true
+                                }
+                                
+                                Button {
+                                    text: "选择文件"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#FFFFFF"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        console.log("选择声音素材文件")
+                                    }
+                                }
+                                
+                                Button {
+                                    text: "复刻"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#FF7875" : "#FF4D4F"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#FFFFFF"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        console.log("开始声音复刻")
+                                    }
+                                }
                             }
                             
-                            Button {
-                                text: "更换头像"
-                                font.pixelSize: 12
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
                                 
-                                background: Rectangle {
-                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                    radius: 4
+                                Text {
+                                    text: "试听文本:"
+                                    font.pixelSize: 14
+                                    color: "#333333"
                                 }
                                 
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: "#FFFFFF"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
+                                TextField {
+                                    id: testTextEdit
+                                    Layout.fillWidth: true
+                                    placeholderText: "输入试听文本"
+                                    font.pixelSize: 14
                                 }
                                 
-                                onClicked: {
-                                    avatarDialog.open()
+                                Button {
+                                    text: "合成试听"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#FFFFFF"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        console.log("合成试听")
+                                    }
                                 }
                             }
                         }
-                    }
-                    
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        rowSpacing: 15
-                        columnSpacing: 20
-                        
                         
                         Text {
-                            text: "英文名(SD卡):"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        TextField {
-                            id: englishNameEdit
-                            Layout.fillWidth: true
-                            placeholderText: "输入大写英文名"
-                            font.pixelSize: 14
-                            maximumLength: 8
-                        }
-                    }
-                    
-                    Text {
-                        text: "声音复刻"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: "#333333"
-                        
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-                        
-                        
-                        Text {
-                            text: "模型选择:"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        Text {
-                            text: "cosyvoice-v3.5-plus"
-                            font.pixelSize: 14
+                            text: "智能体配置"
+                            font.pixelSize: 16
                             font.bold: true
-                            color: "#1890FF"
+                            color: "#333333"
                         }
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
                         
-                        
-                        RowLayout {
+                        GridLayout {
                             Layout.fillWidth: true
-                            spacing: 10
+                            columns: 2
+                            rowSpacing: 15
+                            columnSpacing: 20
                             
                             Text {
-                                text: "素材文件:"
+                                text: "智能体地址:"
                                 font.pixelSize: 14
                                 color: "#333333"
                             }
                             
                             TextField {
-                                id: voiceMaterialEdit
+                                id: agentUrlEdit
                                 Layout.fillWidth: true
-                                placeholderText: "选择声音复刻素材文件"
+                                placeholderText: "输入智能体API地址"
                                 font.pixelSize: 14
+                            }
+                            
+                            Text {
+                                text: "智能体ID:"
+                                font.pixelSize: 14
+                                color: "#333333"
+                            }
+                            
+                            TextField {
+                                id: agentIdEdit
+                                Layout.fillWidth: true
+                                placeholderText: "输入智能体ID"
+                                font.pixelSize: 14
+                            }
+                        }
+                        
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 40
+                            color: "#F5F5F5"
+                            radius: 4
+                            
+                            Button {
+                                anchors.centerIn: parent
+                                text: "智能体配置与测试"
+                                font.pixelSize: 14
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                    radius: 4
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font: parent.font
+                                    color: "#FFFFFF"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                onClicked: {
+                                    console.log("打开智能体配置与测试")
+                                }
+                            }
+                        }
+                        
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 40
+                            color: "#F6FFED"
+                            radius: 4
+                            
+                            Button {
+                                anchors.centerIn: parent
+                                text: "生成NFC信息"
+                                font.pixelSize: 14
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? "#73D13D" : "#52C41A"
+                                    radius: 4
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font: parent.font
+                                    color: "#FFFFFF"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                onClicked: {
+                                    nfcGenerated = true
+                                    if (roleListView.currentIndex >= 0)
+                                        nfcResult = "NFC_INFO:role=" + roleListView.model.get(roleListView.currentIndex).roleName + ",id=" + roleListView.model.get(roleListView.currentIndex).roleId
+                                }
+                            }
+                        }
+                        
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 70
+                            color: "#FAFAFA"
+                            border.color: "#D9D9D9"
+                            border.width: 1
+                            radius: 4
+                            
+                            TextArea {
+                                id: nfcResultEdit
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                placeholderText: "NFC信息将在此显示..."
+                                font.pixelSize: 14
+                                wrapMode: TextArea.Wrap
                                 readOnly: true
-                            }
-                            
-                            Button {
-                                text: "选择文件"
-                                font.pixelSize: 12
-                                
-                                background: Rectangle {
-                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                    radius: 4
-                                }
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: "#FFFFFF"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                onClicked: {
-                                    console.log("选择声音素材文件")
-                                }
-                            }
-                            
-                            Button {
-                                text: "复刻"
-                                font.pixelSize: 12
-                                
-                                background: Rectangle {
-                                    color: parent.hovered ? "#FF7875" : "#FF4D4F"
-                                    radius: 4
-                                }
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: "#FFFFFF"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                onClicked: {
-                                    console.log("开始声音复刻")
-                                }
+                                text: nfcResult
+                                background: Rectangle { color: "transparent" }
                             }
                         }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-                            
-                            Text {
-                                text: "试听文本:"
-                                font.pixelSize: 14
-                                color: "#333333"
-                            }
-                            
-                            TextField {
-                                id: testTextEdit
-                                Layout.fillWidth: true
-                                placeholderText: "输入试听文本"
-                                font.pixelSize: 14
-                            }
-                            
-                            Button {
-                                text: "合成试听"
-                                font.pixelSize: 12
-                                
-                                background: Rectangle {
-                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                    radius: 4
-                                }
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: "#FFFFFF"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                onClicked: {
-                                    console.log("合成试听")
-                                }
-                            }
-                        }
-                    }
-                    
-                    Text {
-                        text: "智能体配置"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: "#333333"
-                        
-                    }
-                    
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        rowSpacing: 15
-                        columnSpacing: 20
-                        
-                        
-                        Text {
-                            text: "智能体地址:"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        TextField {
-                            id: agentUrlEdit
-                            Layout.fillWidth: true
-                            placeholderText: "输入智能体API地址"
-                            font.pixelSize: 14
-                        }
-                        
-                        Text {
-                            text: "智能体ID:"
-                            font.pixelSize: 14
-                            color: "#333333"
-                        }
-                        
-                        TextField {
-                            id: agentIdEdit
-                            Layout.fillWidth: true
-                            placeholderText: "输入智能体ID"
-                            font.pixelSize: 14
-                        }
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: "#F5F5F5"
-                        radius: 4
-                        
                         
                         Button {
-                            anchors.centerIn: parent
-                            text: "智能体配置与测试"
+                            text: "复制NFC信息"
                             font.pixelSize: 14
                             
                             background: Rectangle {
@@ -693,34 +770,47 @@ Rectangle {
                             }
                             
                             onClicked: {
-                                console.log("打开智能体配置与测试")
+                                nfcResultEdit.selectAll()
+                                nfcResultEdit.copy()
+                                nfcResultEdit.deselect()
                             }
                         }
                     }
                     
-                    Text {
-                        text: "参考提示词"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: "#333333"
+                    ColumnLayout {
+                        id: rightColumn
+                        width: parent.width * 0.55 - 15
+                        height: parent.height
+                        anchors.left: leftColumn.right
+                        anchors.leftMargin: 30
+                        spacing: 15
                         
-                    }
-                    
-                    TextArea {
-                        id: promptEdit
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumHeight: 120
-                        placeholderText: "输入参考提示词..."
-                        font.pixelSize: 14
-                        wrapMode: TextArea.Wrap
+                        Text {
+                            text: "参考提示词"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#333333"
+                        }
                         
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-                        
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 120
+                            color: "#FAFAFA"
+                            border.color: "#D9D9D9"
+                            border.width: 1
+                            radius: 4
+                            
+                            TextArea {
+                                id: promptEdit
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                placeholderText: "输入参考提示词..."
+                                font.pixelSize: 14
+                                wrapMode: TextArea.Wrap
+                                background: Rectangle { color: "transparent" }
+                            }
+                        }
                         
                         Button {
                             text: "复制提示词"
@@ -743,32 +833,6 @@ Rectangle {
                                 promptEdit.selectAll()
                                 promptEdit.copy()
                                 promptEdit.deselect()
-                            }
-                        }
-                        
-                        Item {
-                            Layout.fillWidth: true
-                        }
-                        
-                        Button {
-                            text: "生成NFC信息"
-                            font.pixelSize: 14
-                            
-                            background: Rectangle {
-                                color: parent.hovered ? "#73D13D" : "#52C41A"
-                                radius: 4
-                            }
-                            
-                            contentItem: Text {
-                                text: parent.text
-                                font: parent.font
-                                color: "#FFFFFF"
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: {
-                                console.log("生成NFC信息")
                             }
                         }
                     }
