@@ -19,46 +19,42 @@ terminal_assistant/
 ├── CMakeLists.txt              # CMake构建配置
 ├── README.md                   # 项目说明文档
 ├── docs/                       # 文档目录
-│   └ary backend-api.md         # 后端API文档（供前端参考）
+│   ├── backend-api.md          # 后端API文档
+│   └── frontend-ui.md          # 前端UI文档
 ├── main.cpp                    # 程序入口
 │
 ├── src/
 │   ├── backend/                # 后端模块
 │   │   ├── sdcard/             # SD卡操作模块
-│   │   │   ├── SDCardManager.h
-│   │   │   └── SDCardManager.cpp
 │   │   ├── basic/              # 基础配置后端
-│   │   │   ├── BasicConfig.h
-│   │   │   └── BasicConfig.cpp
 │   │   ├── agent/              # 智能体配置后端
-│   │   │   ├── AgentConfig.h
-│   │   │   └── AgentConfig.cpp
 │   │   ├── radio/              # 电台配置后端
-│   │   │   ├── RadioConfig.h
-│   │   │   └── RadioConfig.cpp
 │   │   ├── maintenance/        # 维护模块后端
-│   │   │   ├── MaintenanceManager.h
-│   │   │   └── MaintenanceManager.cpp
 │   │   ├── python/             # Python调用接口
-│   │   │   ├── PythonRunner.h
-│   │   │   └── PythonRunner.cpp
-│   │   └── logger/             # 日志管理
-│   │       ├── Logger.h
-│   │       └── Logger.cpp
+│   │   ├── logger/             # 日志管理
+│   │   └── user/               # 用户设置与角色信息
 │   │
 │   └── frontend/               # 前端模块(QML)
-│       ├── qml/                # QML文件
-│       │   ├── main.qml        # 主窗口
-│       │   ├── CustomTabBar.qml
-│       │   ├── LogPanel.qml
-│       │   ├── ApplyButton.qml
-│       │   ├── BasicConfigPage.qml
-│       │   ├── AgentConfigPage.qml
-│       │   ├── RadioConfigPage.qml
-│       │   └── MaintenancePage.qml
-│       └── images/             # 图片资源
+│       ├── qml/
+│       │   ├── Main.qml        # 主窗口
+│       │   ├── components/     # 通用组件
+│       │   │   ├── CustomTabBar.qml
+│       │   │   ├── LogPanel.qml
+│       │   │   └── ApplyButton.qml
+│       │   └── pages/          # 页面
+│       │       ├── BasicConfigPage.qml
+│       │       ├── AgentConfigPage.qml
+│       │       ├── RadioConfigPage.qml
+│       │       ├── MaintenancePage.qml
+│       │       └── agent/      # 智能体子页面
+│       │           ├── AccountPage.qml
+│       │           ├── HotWordsPage.qml
+│       │           ├── KnowledgeBasePage.qml
+│       │           ├── RolePage.qml
+│       │           └── OtherPage.qml
+│       └── fonts/              # 字体资源
 │
-└── tests/                      # 测试目录(待添加)
+└── build/                      # 构建输出
 ```
 
 ## 功能模块
@@ -197,7 +193,8 @@ ninja
 
 ## 文档
 
-- [后端API文档](docs/backend-api.md) - 详细的后端接口说明，供前端开发参考
+- [后端API文档](docs/backend-api.md) - 后端接口说明
+- [前端UI文档](docs/frontend-ui.md) - 前端界面结构、布局和设计规范
 
 ## 许可证
 
