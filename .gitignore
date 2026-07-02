@@ -1,0 +1,63 @@
+# Build directories
+build/
+Build/
+out/
+debug/
+release/
+
+# Qt generated files
+*.autosave
+*.user
+*.user.*
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*CMakeCache.txt
+*CMakeFiles/
+cmake_install.cmake
+*.dir/
+*.cmake
+
+# Compiled executables
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Object files
+*.o
+*.obj
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# Temp files
+*.log
+*.tmp
+*.bak
+*~
+
+# Qt Creator
+*.creator
+*.creator.user
+*.creator.user.*
+
+# QML cache
+.rcc/
+.qmlcache/
+
+# Ninja
+.ninja_deps
+.ninja_log
+*.ninja
