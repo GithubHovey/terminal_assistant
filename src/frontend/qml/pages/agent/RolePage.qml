@@ -406,6 +406,21 @@ Rectangle {
                                 font.bold: true
                                 color: "#FFFFFF"
                             }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    avatarDialog.open()
+                                }
+                            }
+                        }
+                        
+                        Text {
+                            text: isCurrentUser ? "点击头像更换" : ""
+                            font.pixelSize: 12
+                            color: "#999999"
+                            visible: isCurrentUser
                         }
                         
                         ColumnLayout {
@@ -447,49 +462,6 @@ Rectangle {
                                 onClicked: {
                                     avatarDialog.open()
                                 }
-                            }
-                        }
-                        
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-                            visible: isCurrentUser
-                            
-                            Text {
-                                text: roleListView.currentItem ? roleListView.model.get(roleListView.currentIndex).roleName : "user"
-                                font.pixelSize: 18
-                                font.bold: true
-                                color: "#333333"
-                            }
-                            
-                            Rectangle {
-                                Layout.preferredWidth: 100
-                                Layout.preferredHeight: 32
-                                radius: 4
-                                color: avatarMouseArea.containsMouse ? "#40A9FF" : "#1890FF"
-                                
-                                MouseArea {
-                                    id: avatarMouseArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        avatarDialog.open()
-                                    }
-                                }
-                                
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "更换头像"
-                                    font.pixelSize: 12
-                                    color: "#FFFFFF"
-                                }
-                            }
-                            
-                            Text {
-                                text: "用户角色仅需设置头像"
-                                font.pixelSize: 12
-                                color: "#999999"
                             }
                         }
                     }
