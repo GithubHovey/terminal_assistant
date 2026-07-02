@@ -315,6 +315,7 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
+                    currentIndex: -1
                     
                     model: ListModel {
                     }
