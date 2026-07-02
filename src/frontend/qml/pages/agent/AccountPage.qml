@@ -28,7 +28,7 @@ Rectangle {
             }
             
             Text {
-                text: "阿里云"
+                text: "阿里百炼"
                 font.pixelSize: 14
                 font.bold: true
                 color: "#1890FF"
