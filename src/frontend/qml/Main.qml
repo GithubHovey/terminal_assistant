@@ -10,13 +10,6 @@ ApplicationWindow {
     height: 720
     title: qsTr("深空联合助手")
     color: "#FFFFFF"
-    
-    FontLoader {
-        id: appFont
-        source: "qrc:/qt/qml/App/src/frontend/fonts/SourceHanSansCN-Medium-2.otf"
-    }
-    
-    font.family: appFont.name
 
     ColumnLayout {
         anchors.fill: parent
