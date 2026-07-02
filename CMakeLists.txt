@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Multimedia)
 
 set(BACKEND_SOURCES
     src/backend/sdcard/SDCardManager.cpp
@@ -63,6 +63,7 @@ qt_add_qml_module(DeepSpaceAssistant
 target_link_libraries(DeepSpaceAssistant PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
+    Qt6::Multimedia
 )
 
 set_target_properties(DeepSpaceAssistant PROPERTIES

@@ -5,6 +5,7 @@
 #include <QQuickStyle>
 #include <QFontDatabase>
 #include "src/backend/logger/Logger.h"
+#include "src/backend/radio/RadioConfig.h"
 
 using namespace Qt::StringLiterals;
 
@@ -21,6 +22,10 @@ int main(int argc, char *argv[])
     app.setFont(font);
     
     QQmlApplicationEngine engine;
+    
+    RadioConfig radioConfig;
+    radioConfig.loadConfig();
+    engine.rootContext()->setContextProperty("radioConfig", &radioConfig);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     
