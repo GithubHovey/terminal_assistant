@@ -483,6 +483,24 @@ Rectangle {
                         color: "#333333"
                     }
                     
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        
+                        Text {
+                            text: "模型选择:"
+                            font.pixelSize: 14
+                            color: "#333333"
+                        }
+                        
+                        Text {
+                            text: "cosyvoice-v3.5-plus"
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: "#1890FF"
+                        }
+                    }
+                    
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 10
