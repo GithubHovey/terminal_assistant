@@ -10,6 +10,13 @@ ApplicationWindow {
     height: 720
     title: qsTr("深空联合助手")
     color: "#FFFFFF"
+    
+    FontLoader {
+        id: appFont
+        source: "qrc:/qt/qml/App/src/frontend/fonts/SourceHanSansCN-Medium-2.otf"
+    }
+    
+    font.family: appFont.name
 
     ColumnLayout {
         anchors.fill: parent
@@ -17,7 +24,7 @@ ApplicationWindow {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: 36
             color: "#FFFFFF"
 
             CustomTabBar {
@@ -26,19 +33,79 @@ ApplicationWindow {
 
                 TabButton {
                     text: qsTr("基础配置")
-                    font.pixelSize: 14
+                    font.pixelSize: 20
+                    font.bold: true
+                    width: implicitWidth + 40
+                    
+                    background: Rectangle {
+                        color: tabBar.currentIndex === 0 ? "#1890FF" : (parent.hovered ? "#E6F7FF" : "#FFFFFF")
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: tabBar.currentIndex === 0 ? "#FFFFFF" : "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
                 TabButton {
                     text: qsTr("智能体配置")
-                    font.pixelSize: 14
+                    font.pixelSize: 20
+                    font.bold: true
+                    width: implicitWidth + 40
+                    
+                    background: Rectangle {
+                        color: tabBar.currentIndex === 1 ? "#1890FF" : (parent.hovered ? "#E6F7FF" : "#FFFFFF")
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: tabBar.currentIndex === 1 ? "#FFFFFF" : "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
                 TabButton {
                     text: qsTr("电台配置")
-                    font.pixelSize: 14
+                    font.pixelSize: 20
+                    font.bold: true
+                    width: implicitWidth + 40
+                    
+                    background: Rectangle {
+                        color: tabBar.currentIndex === 2 ? "#1890FF" : (parent.hovered ? "#E6F7FF" : "#FFFFFF")
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: tabBar.currentIndex === 2 ? "#FFFFFF" : "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
                 TabButton {
                     text: qsTr("维护")
-                    font.pixelSize: 14
+                    font.pixelSize: 20
+                    font.bold: true
+                    width: implicitWidth + 40
+                    
+                    background: Rectangle {
+                        color: tabBar.currentIndex === 3 ? "#1890FF" : (parent.hovered ? "#E6F7FF" : "#FFFFFF")
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: tabBar.currentIndex === 3 ? "#FFFFFF" : "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
             }
         }

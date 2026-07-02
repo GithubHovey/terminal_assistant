@@ -47,6 +47,8 @@ qt_add_qml_module(DeepSpaceAssistant
         src/frontend/qml/AgentConfigPage.qml
         src/frontend/qml/RadioConfigPage.qml
         src/frontend/qml/MaintenancePage.qml
+    RESOURCES
+        src/frontend/fonts/SourceHanSansCN-Medium-2.otf
 )
 
 target_link_libraries(DeepSpaceAssistant PRIVATE

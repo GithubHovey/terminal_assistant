@@ -8,7 +8,7 @@ Button {
     
     background: Rectangle {
         color: control.pressed ? "#096DD9" : (control.hovered ? "#40A9FF" : "#1890FF")
-        radius: 4
+        radius: 8
         
         Behavior on color {
             ColorAnimation { duration: 150 }
