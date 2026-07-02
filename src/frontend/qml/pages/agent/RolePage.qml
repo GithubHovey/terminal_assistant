@@ -462,12 +462,6 @@ Rectangle {
                                 color: "#333333"
                             }
                             
-                            Text {
-                                text: "点击头像更换"
-                                font.pixelSize: 12
-                                color: "#999999"
-                            }
-                            
                             Rectangle {
                                 Layout.preferredWidth: 100
                                 Layout.preferredHeight: 32
@@ -490,6 +484,12 @@ Rectangle {
                                     font.pixelSize: 12
                                     color: "#FFFFFF"
                                 }
+                            }
+                            
+                            Text {
+                                text: "用户角色仅需设置头像"
+                                font.pixelSize: 12
+                                color: "#999999"
                             }
                         }
                     }
