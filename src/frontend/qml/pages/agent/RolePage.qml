@@ -259,57 +259,6 @@ Rectangle {
                     }
                 }
                 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 100
-                    color: userMouseArea.containsMouse ? "#F0F0F0" : "#FFFFFF"
-                    border.width: 1
-                    border.color: "#E0E0E0"
-                    
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        
-                        Rectangle {
-                            Layout.preferredWidth: 60
-                            Layout.preferredHeight: 60
-                            radius: 30
-                            color: "#CCCCCC"
-                            
-                            Text {
-                                anchors.centerIn: parent
-                                text: "U"
-                                font.pixelSize: 24
-                                font.bold: true
-                                color: "#FFFFFF"
-                            }
-                        }
-                        
-                        Text {
-                            text: "user"
-                            font.pixelSize: 14
-                            color: "#333333"
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
-                    
-                    MouseArea {
-                        id: userMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            roleListView.currentIndex = -1
-                        }
-                    }
-                }
-                
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: "#E0E0E0"
-                }
-                
                 ListView {
                     id: roleListView
                     Layout.fillWidth: true
@@ -429,11 +378,20 @@ Rectangle {
             Layout.fillHeight: true
             color: "#FFFFFF"
             
-            property bool isCurrentUser: roleListView.currentIndex < 0
+            property bool hasSelectedRole: roleListView.currentIndex >= 0
+            
+            Text {
+                anchors.centerIn: parent
+                text: "请先创建一个角色"
+                font.pixelSize: 16
+                color: "#999999"
+                visible: !parent.hasSelectedRole
+            }
             
             ScrollView {
                 anchors.fill: parent
                 clip: true
+                visible: parent.hasSelectedRole
                 
                 ColumnLayout {
                     anchors.fill: parent
@@ -452,7 +410,7 @@ Rectangle {
                             
                             Text {
                                 anchors.centerIn: parent
-                                text: roleListView.currentItem ? roleListView.model.get(roleListView.currentIndex).roleName.charAt(0).toUpperCase() : "U"
+                                text: roleListView.model.get(roleListView.currentIndex).roleName.charAt(0).toUpperCase()
                                 font.pixelSize: 28
                                 font.bold: true
                                 color: "#FFFFFF"
@@ -467,17 +425,9 @@ Rectangle {
                             }
                         }
                         
-                        Text {
-                            text: isCurrentUser ? "点击头像更换" : ""
-                            font.pixelSize: 12
-                            color: "#999999"
-                            visible: isCurrentUser
-                        }
-                        
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 10
-                            visible: !isCurrentUser
                             
                             Text {
                                 text: "角色名称:"
@@ -490,7 +440,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 placeholderText: "输入角色名称"
                                 font.pixelSize: 14
-                                text: roleListView.currentItem ? roleListView.model.get(roleListView.currentIndex).roleName : ""
+                                text: roleListView.model.get(roleListView.currentIndex).roleName
                             }
                             
                             Button {
@@ -522,7 +472,7 @@ Rectangle {
                         columns: 2
                         rowSpacing: 15
                         columnSpacing: 20
-                        visible: !isCurrentUser
+                        
                         
                         Text {
                             text: "英文名(SD卡):"
@@ -544,13 +494,13 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
-                        visible: !isCurrentUser
+                        
                     }
                     
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
-                        visible: !isCurrentUser
+                        
                         
                         Text {
                             text: "模型选择:"
@@ -569,7 +519,7 @@ Rectangle {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 10
-                        visible: !isCurrentUser
+                        
                         
                         RowLayout {
                             Layout.fillWidth: true
@@ -680,7 +630,7 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
-                        visible: !isCurrentUser
+                        
                     }
                     
                     GridLayout {
@@ -688,7 +638,7 @@ Rectangle {
                         columns: 2
                         rowSpacing: 15
                         columnSpacing: 20
-                        visible: !isCurrentUser
+                        
                         
                         Text {
                             text: "智能体地址:"
@@ -722,7 +672,7 @@ Rectangle {
                         Layout.preferredHeight: 40
                         color: "#F5F5F5"
                         radius: 4
-                        visible: !isCurrentUser
+                        
                         
                         Button {
                             anchors.centerIn: parent
@@ -753,7 +703,7 @@ Rectangle {
                         font.pixelSize: 16
                         font.bold: true
                         color: "#333333"
-                        visible: !isCurrentUser
+                        
                     }
                     
                     TextArea {
@@ -764,13 +714,13 @@ Rectangle {
                         placeholderText: "输入参考提示词..."
                         font.pixelSize: 14
                         wrapMode: TextArea.Wrap
-                        visible: !isCurrentUser
+                        
                     }
                     
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
-                        visible: !isCurrentUser
+                        
                         
                         Button {
                             text: "复制提示词"
