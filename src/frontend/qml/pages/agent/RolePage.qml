@@ -54,7 +54,7 @@ Rectangle {
                     
                     onClicked: {
                             if (newRoleName.trim() !== "") {
-                                var newId = roleListView.model.count
+                                var newId = roleListView.model.count + 1
                                 roleListView.model.append({ roleName: newRoleName.trim(), roleId: newId, canDelete: true })
                                 roleNameInput.text = ""
                                 newRoleName = ""
@@ -259,6 +259,57 @@ Rectangle {
                     }
                 }
                 
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 100
+                    color: userMouseArea.containsMouse ? "#F0F0F0" : "#FFFFFF"
+                    border.width: 1
+                    border.color: "#E0E0E0"
+                    
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
+                        
+                        Rectangle {
+                            Layout.preferredWidth: 60
+                            Layout.preferredHeight: 60
+                            radius: 30
+                            color: "#CCCCCC"
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "U"
+                                font.pixelSize: 24
+                                font.bold: true
+                                color: "#FFFFFF"
+                            }
+                        }
+                        
+                        Text {
+                            text: "user"
+                            font.pixelSize: 14
+                            color: "#333333"
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                    
+                    MouseArea {
+                        id: userMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            roleListView.currentIndex = -1
+                        }
+                    }
+                }
+                
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    color: "#E0E0E0"
+                }
+                
                 ListView {
                     id: roleListView
                     Layout.fillWidth: true
@@ -266,7 +317,6 @@ Rectangle {
                     clip: true
                     
                     model: ListModel {
-                        ListElement { roleName: "user"; roleId: 0; canDelete: false }
                     }
                     
                     delegate: Rectangle {
@@ -378,7 +428,7 @@ Rectangle {
             Layout.fillHeight: true
             color: "#FFFFFF"
             
-            property bool isCurrentUser: roleListView.currentItem ? (roleListView.model.get(roleListView.currentIndex).roleId === 0) : true
+            property bool isCurrentUser: roleListView.currentIndex < 0
             
             ScrollView {
                 anchors.fill: parent
