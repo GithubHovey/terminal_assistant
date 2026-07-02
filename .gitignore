@@ -4,6 +4,7 @@ Build/
 out/
 debug/
 release/
+deploy/
 
 # Qt generated files
 *.autosave

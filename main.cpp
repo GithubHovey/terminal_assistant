@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     
     QQuickStyle::setStyle("Basic");
     
-    QFontDatabase::addApplicationFont(":/qt/qml/App/src/frontend/fonts/SourceHanSansCN-Medium-2.otf");
+    QFontDatabase::addApplicationFont(":/App/src/frontend/fonts/SourceHanSansCN-Medium-2.otf");
     
     QFont font("Source Han Sans CN");
     font.setPixelSize(14);
@@ -24,7 +24,11 @@ int main(int argc, char *argv[])
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     
-    engine.loadFromModule(u"App"_s, u"Main"_s);
+    engine.load(QUrl(u"qrc:/App/src/frontend/qml/Main.qml"_s));
+    
+    if (engine.rootObjects().isEmpty()) {
+        return -1;
+    }
     
     Logger::instance().logInfo("早上好索拉里斯！");
     
