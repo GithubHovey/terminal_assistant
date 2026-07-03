@@ -9,9 +9,6 @@ Rectangle {
     color: "#F5F5F5"
 
     property int currentPlayingIndex: -1
-    property int dragFromIndex: -1
-    property int dragToIndex: -1
-    property bool isDragging: false
 
     Timer {
         id: playAfterLoadTimer
@@ -46,6 +43,30 @@ Rectangle {
         if (num < 10) return "00" + num
         if (num < 100) return "0" + num
         return "" + num
+    }
+
+    function moveSongUp(idx) {
+        if (idx <= 0) return
+        if (currentPlayingIndex === idx) {
+            currentPlayingIndex = idx - 1
+        } else if (currentPlayingIndex === idx - 1) {
+            currentPlayingIndex = idx
+        }
+        songModel.move(idx, idx - 1, 1)
+        radioConfig.moveSong(idx, idx - 1)
+        radioConfig.saveConfig()
+    }
+
+    function moveSongDown(idx) {
+        if (idx >= songModel.count - 1) return
+        if (currentPlayingIndex === idx) {
+            currentPlayingIndex = idx + 1
+        } else if (currentPlayingIndex === idx + 1) {
+            currentPlayingIndex = idx
+        }
+        songModel.move(idx, idx + 1, 1)
+        radioConfig.moveSong(idx, idx + 1)
+        radioConfig.saveConfig()
     }
 
     ColumnLayout {
@@ -97,31 +118,6 @@ Rectangle {
                     width: 8
                     policy: ScrollBar.AsNeeded
                 }
-
-                Timer {
-                    id: autoScrollTimer
-                    interval: 16
-                    running: isDragging && (dragToIndex >= 0)
-                    repeat: true
-                    onTriggered: {
-                        var threshold = 60
-                        var speed = 0
-
-                        if (flickable.dragMouseY < threshold) {
-                            speed = -5 - (threshold - flickable.dragMouseY) * 0.25
-                        } else if (flickable.dragMouseY > flickable.height - threshold) {
-                            speed = 5 + (flickable.dragMouseY - (flickable.height - threshold)) * 0.25
-                        }
-
-                        if (speed !== 0) {
-                            var newY = flickable.contentY + speed
-                            newY = Math.max(0, Math.min(newY, flickable.contentHeight - flickable.height))
-                            flickable.contentY = newY
-                        }
-                    }
-                }
-
-                property real dragMouseY: 0
 
                 Item {
                     id: gridContainer
@@ -223,20 +219,6 @@ Rectangle {
             border.color: cardMouse.containsMouse ? "#E8E8E8" : "transparent"
 
             property bool isPlaying: currentPlayingIndex === index
-            property bool isBeingDragged: dragFromIndex === index && isDragging
-
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.radius
-                color: "transparent"
-                border.width: isBeingDragged ? 2 : 0
-                border.color: "#1890FF"
-                opacity: isBeingDragged ? 0.85 : 1.0
-                scale: isBeingDragged ? 1.02 : 1.0
-
-                Behavior on opacity { NumberAnimation { duration: 100 } }
-                Behavior on scale { NumberAnimation { duration: 100 } }
-            }
 
             Rectangle {
                 id: playingIndicator
@@ -388,61 +370,59 @@ MouseArea {
                     }
                 }
 
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 20
-                    color: "transparent"
+                    Layout.preferredHeight: 24
 
                     Row {
                         anchors.centerIn: parent
-                        spacing: 3
+                        spacing: 8
 
-                        Repeater {
-                            model: 3
-                            Rectangle {
-                                width: 16
-                                height: 2
-                                radius: 1
-                                color: dragMouse.containsMouse ? "#1890FF" : "#D9D9D9"
+                        Rectangle {
+                            width: 28
+                            height: 24
+                            radius: 4
+                            color: upMouse.containsMouse ? "#E6F7FF" : "#F0F0F0"
+                            visible: index > 0
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\u2191"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: upMouse.containsMouse ? "#1890FF" : "#999999"
+                            }
+
+                            MouseArea {
+                                id: upMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: moveSongUp(index)
                             }
                         }
-                    }
 
-                    MouseArea {
-                        id: dragMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.ClosedHandCursor
+                        Rectangle {
+                            width: 28
+                            height: 24
+                            radius: 4
+                            color: downMouse.containsMouse ? "#E6F7FF" : "#F0F0F0"
+                            visible: index < songModel.count - 1
 
-                        onPressed: {
-                            dragFromIndex = index
-                            isDragging = true
-                        }
-
-                        onReleased: {
-                            if (dragToIndex >= 0 && dragToIndex !== dragFromIndex) {
-                                songModel.move(dragFromIndex, dragToIndex)
-                                radioConfig.moveSong(dragFromIndex, dragToIndex)
-                                radioConfig.saveConfig()
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\u2193"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: downMouse.containsMouse ? "#1890FF" : "#999999"
                             }
-                            isDragging = false
-                            dragFromIndex = -1
-                            dragToIndex = -1
-                        }
 
-                        onPositionChanged: {
-                            if (isDragging) {
-                                var globalPos = mapToItem(root, mouseX, mouseY)
-                                flickable.dragMouseY = globalPos.y
-
-                                var gridPos = mapToItem(gridLayout, mouseX, mouseY)
-                                var col = Math.floor(gridPos.x / (gridLayout.width / 4))
-                                var row = Math.floor(gridPos.y / 275)
-                                var targetIdx = row * 4 + col
-
-                                if (targetIdx >= 0 && targetIdx < songModel.count) {
-                                    dragToIndex = targetIdx
-                                }
+                            MouseArea {
+                                id: downMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: moveSongDown(index)
                             }
                         }
                     }
