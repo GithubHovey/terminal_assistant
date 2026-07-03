@@ -9,6 +9,8 @@ Rectangle {
     color: "#F5F5F5"
 
     property int currentPlayingIndex: -1
+    property string pendingImportId: ""
+    property string pendingImportTitle: ""
 
     Timer {
         id: playAfterLoadTimer
@@ -47,6 +49,7 @@ Rectangle {
 
     function moveSongUp(idx) {
         if (idx <= 0) return
+        var wasPlaying = currentPlayingIndex
         if (currentPlayingIndex === idx) {
             currentPlayingIndex = idx - 1
         } else if (currentPlayingIndex === idx - 1) {
@@ -55,10 +58,15 @@ Rectangle {
         songModel.move(idx, idx - 1, 1)
         radioConfig.moveSong(idx, idx - 1)
         radioConfig.saveConfig()
+        syncModelFromBackend()
+        if (wasPlaying >= 0) {
+            mediaPlayer.source = "file:///" + radioConfig.musicDir() + "/" + songModel.get(currentPlayingIndex).mp3
+        }
     }
 
     function moveSongDown(idx) {
         if (idx >= songModel.count - 1) return
+        var wasPlaying = currentPlayingIndex
         if (currentPlayingIndex === idx) {
             currentPlayingIndex = idx + 1
         } else if (currentPlayingIndex === idx + 1) {
@@ -67,6 +75,23 @@ Rectangle {
         songModel.move(idx, idx + 1, 1)
         radioConfig.moveSong(idx, idx + 1)
         radioConfig.saveConfig()
+        syncModelFromBackend()
+        if (wasPlaying >= 0) {
+            mediaPlayer.source = "file:///" + radioConfig.musicDir() + "/" + songModel.get(currentPlayingIndex).mp3
+        }
+    }
+
+    function syncModelFromBackend() {
+        songModel.clear()
+        var songs = radioConfig.getSongList()
+        for (var i = 0; i < songs.length; i++) {
+            songModel.append({
+                "id": songs[i].id,
+                "title": songs[i].title,
+                "mp3": songs[i].mp3,
+                "cover": songs[i].cover || ""
+            })
+        }
     }
 
     ColumnLayout {
@@ -246,9 +271,9 @@ Rectangle {
                     Image {
                         id: coverImage
                         anchors.fill: parent
-                        source: model.coverPath ? "file:///" + model.coverPath : ""
+                        source: model.cover ? "file:///" + radioConfig.musicDir() + "/" + model.cover : ""
                         fillMode: Image.PreserveAspectCrop
-                        visible: model.coverPath && status === Image.Ready
+                        visible: model.cover && status === Image.Ready
                     }
 
                     Text {
@@ -257,6 +282,17 @@ Rectangle {
                         font.pixelSize: 48
                         color: "#CCCCCC"
                         visible: !coverImage.visible
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: {
+                            coverChangeDialog.songIndex = index
+                            coverChangeDialog.coverPath = model.cover
+                            coverChangeDialog.open()
+                        }
                     }
                 }
 
@@ -272,21 +308,13 @@ Rectangle {
                     }
 
                     Text {
-                        text: model.name || model.filePath.replace(/\.mp3$/i, "")
+                        text: model.title
                         font.pixelSize: 14
                         font.bold: true
                         color: "#333333"
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
-                }
-
-                Text {
-                    text: model.album || "\u672A\u77E5\u4E13\u8F91"
-                    font.pixelSize: 12
-                    color: "#999999"
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
                 }
 
                 Item { Layout.fillHeight: true }
@@ -313,29 +341,30 @@ Rectangle {
                                 color: "#FFFFFF"
                             }
 
-MouseArea {
-                                 id: playMouse
-                                 anchors.fill: parent
-                                 hoverEnabled: true
-                                 cursorShape: Qt.PointingHandCursor
-                                 onClicked: {
-                                     if (isPlaying) {
-                                         mediaPlayer.stop()
-                                         currentPlayingIndex = -1
-                                     } else {
-                                         var newSource = "file:///" + radioConfig.songsDir() + "/" + model.filePath
-                                         if (mediaPlayer.source.toString() === newSource) {
-                                             mediaPlayer.play()
-                                         } else {
-                                             mediaPlayer.source = newSource
-                                             mediaPlayer.play()
-                                             playAfterLoadTimer.savedIndex = index
-                                             playAfterLoadTimer.start()
-                                         }
-                                         currentPlayingIndex = index
-                                     }
-                                 }
-                             }
+                            MouseArea {
+                                id: playMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                  onClicked: {
+                                      if (isPlaying) {
+                                          mediaPlayer.stop()
+                                          currentPlayingIndex = -1
+                                      } else {
+                                          var newSource = "file:///" + radioConfig.musicDir() + "/" + model.mp3
+                                          radioConfig.configError("播放路径: " + newSource)
+                                          if (mediaPlayer.source.toString() === newSource) {
+                                              mediaPlayer.play()
+                                          } else {
+                                              mediaPlayer.source = newSource
+                                              mediaPlayer.play()
+                                              playAfterLoadTimer.savedIndex = index
+                                              playAfterLoadTimer.start()
+                                          }
+                                          currentPlayingIndex = index
+                                      }
+                                  }
+                            }
                         }
 
                         Rectangle {
@@ -477,13 +506,12 @@ MouseArea {
 
                     onClicked: {
                         if (deleteConfirmDialog.deleteIndex >= 0) {
-                            if (currentPlayingIndex === deleteConfirmDialog.deleteIndex) {
-                                mediaPlayer.stop()
-                                currentPlayingIndex = -1
-                            }
-                            songModel.remove(deleteConfirmDialog.deleteIndex)
+                            mediaPlayer.stop()
+                            mediaPlayer.source = ""
+                            currentPlayingIndex = -1
                             radioConfig.removeSong(deleteConfirmDialog.deleteIndex)
                             radioConfig.saveConfig()
+                            syncModelFromBackend()
                             deleteConfirmDialog.deleteIndex = -1
                             deleteConfirmDialog.close()
                         }
@@ -527,31 +555,155 @@ MouseArea {
             if (srcPath.startsWith("file:///")) {
                 srcPath = srcPath.substring(8)
             }
-            var storedFileName = radioConfig.importSong(srcPath)
-            if (storedFileName !== "") {
-                var name = storedFileName.replace(/\.mp3$/i, "")
-                songModel.append({
-                    "name": name,
-                    "filePath": storedFileName,
-                    "album": "",
-                    "coverPath": ""
-                })
-                radioConfig.addSong(name, storedFileName, "")
+            var lastSlash = srcPath.lastIndexOf("/")
+            var fileName = srcPath.substring(lastSlash + 1)
+            pendingImportTitle = fileName.replace(/\.mp3$/i, "")
+            var importedId = radioConfig.importSong(srcPath)
+            if (importedId !== "") {
+                pendingImportId = importedId
+                coverFileDialog.open()
+            }
+        }
+    }
+
+    FileDialog {
+        id: coverFileDialog
+        title: "\u9009\u62E9\u5C01\u9762\u56FE\u7247 (\u53EF\u8DF3\u8FC7)"
+        nameFilters: ["\u56FE\u7247\u6587\u4EF6 (*.jpg *.jpeg *.png *.bmp *.bin)"]
+        onAccepted: {
+            var srcPath = selectedFile.toString()
+            if (srcPath.startsWith("file:///")) {
+                srcPath = srcPath.substring(8)
+            }
+            var storedCoverPath = radioConfig.importCover(srcPath, pendingImportId)
+            finishImport(storedCoverPath)
+        }
+        onRejected: {
+            finishImport("")
+        }
+
+        function finishImport(coverPath) {
+            songModel.append({
+                "id": pendingImportId,
+                "title": pendingImportTitle,
+                "mp3": pendingImportId + "/" + pendingImportId + ".mp3",
+                "cover": coverPath
+            })
+            radioConfig.addSong(pendingImportId, pendingImportTitle, pendingImportId + "/" + pendingImportId + ".mp3", coverPath)
+            radioConfig.saveConfig()
+            pendingImportId = ""
+            pendingImportTitle = ""
+        }
+    }
+
+    Dialog {
+        id: coverChangeDialog
+        title: "\u5C01\u9762\u8BBE\u7F6E"
+        modal: true
+        anchors.centerIn: parent
+        property int songIndex: -1
+        property string coverPath: ""
+
+        ColumnLayout {
+            spacing: 10
+
+            Rectangle {
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 120
+                radius: 8
+                color: "#F0F0F0"
+                clip: true
+
+                Image {
+                    anchors.fill: parent
+                    source: coverChangeDialog.coverPath ? "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath : ""
+                    fillMode: Image.PreserveAspectCrop
+                    visible: coverChangeDialog.coverPath && status === Image.Ready
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\u65E0\u5C01\u9762"
+                    font.pixelSize: 14
+                    color: "#999999"
+                    visible: !coverChangeDialog.coverPath || coverImage2.status !== Image.Ready
+                }
+
+                Image {
+                    id: coverImage2
+                    anchors.fill: parent
+                    source: coverChangeDialog.coverPath ? "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath : ""
+                    fillMode: Image.PreserveAspectCrop
+                    visible: false
+                }
+            }
+
+            RowLayout {
+                spacing: 10
+
+                Button {
+                    text: "\u66F4\u6362\u5C01\u9762"
+                    font.pixelSize: 13
+                    background: Rectangle {
+                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    onClicked: {
+                        coverChangeFileDialog.songIndex = coverChangeDialog.songIndex
+                        coverChangeDialog.close()
+                        coverChangeFileDialog.open()
+                    }
+                }
+
+                Button {
+                    text: "\u5173\u95ED"
+                    font.pixelSize: 13
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    onClicked: coverChangeDialog.close()
+                }
+            }
+        }
+    }
+
+    FileDialog {
+        id: coverChangeFileDialog
+        title: "\u9009\u62E9\u5C01\u9762\u56FE\u7247"
+        nameFilters: ["\u56FE\u7247\u6587\u4EF6 (*.jpg *.jpeg *.png *.bmp *.bin)"]
+        property int songIndex: -1
+        onAccepted: {
+            var srcPath = selectedFile.toString()
+            if (srcPath.startsWith("file:///")) {
+                srcPath = srcPath.substring(8)
+            }
+            var songs = radioConfig.getSongList()
+            var subDir = songs[songIndex].mp3.substring(0, songs[songIndex].mp3.indexOf("/"))
+            var storedCoverPath = radioConfig.importCover(srcPath, subDir)
+            if (storedCoverPath !== "") {
+                songModel.setProperty(songIndex, "cover", storedCoverPath)
+                radioConfig.updateSongCover(songIndex, storedCoverPath)
                 radioConfig.saveConfig()
             }
         }
     }
 
     Component.onCompleted: {
-        songModel.clear()
-        var songs = radioConfig.getSongList()
-        for (var i = 0; i < songs.length; i++) {
-            songModel.append({
-                "name": songs[i].name,
-                "filePath": songs[i].filePath,
-                "album": songs[i].album || "",
-                "coverPath": songs[i].coverPath || ""
-            })
-        }
+        syncModelFromBackend()
     }
 }

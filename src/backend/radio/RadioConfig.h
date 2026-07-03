@@ -7,10 +7,10 @@
 #include <QString>
 
 struct SongItem {
-    int index;
-    QString name;
-    QString filePath;
-    QString coverPath;
+    QString id;
+    QString title;
+    QString mp3;
+    QString cover;
 
     QVariantMap toMap() const;
     static SongItem fromMap(const QVariantMap &map);
@@ -31,12 +31,14 @@ public:
     Q_INVOKABLE QVariantList getSongList() const;
     Q_INVOKABLE int songCount() const;
 
-    Q_INVOKABLE void addSong(const QString &name, const QString &filePath, const QString &coverPath);
+    Q_INVOKABLE void addSong(const QString &id, const QString &title, const QString &mp3, const QString &cover);
     Q_INVOKABLE void removeSong(int index);
     Q_INVOKABLE void moveSong(int fromIndex, int toIndex);
+    Q_INVOKABLE void updateSongCover(int index, const QString &cover);
     Q_INVOKABLE void reindex();
-    Q_INVOKABLE QString songsDir() const;
+    Q_INVOKABLE QString musicDir() const;
     Q_INVOKABLE QString importSong(const QString &srcFilePath);
+    Q_INVOKABLE QString importCover(const QString &srcFilePath, const QString &subDir);
 
 signals:
     void songListChanged();
@@ -45,6 +47,7 @@ signals:
 private:
     QList<SongItem> m_songs;
     QString configFilePath() const;
+    void migrateFromOldFormat();
 };
 
 #endif // RADIOCONFIG_H

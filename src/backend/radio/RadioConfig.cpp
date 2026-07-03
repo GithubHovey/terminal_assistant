@@ -11,20 +11,26 @@
 QVariantMap SongItem::toMap() const
 {
     QVariantMap map;
-    map["index"] = index;
-    map["name"] = name;
-    map["filePath"] = filePath;
-    map["coverPath"] = coverPath;
+    map["id"] = id;
+    map["title"] = title;
+    map["mp3"] = mp3;
+    map["cover"] = cover;
     return map;
 }
 
 SongItem SongItem::fromMap(const QVariantMap &map)
 {
     SongItem item;
-    item.index = map.value("index").toInt();
-    item.name = map.value("name").toString();
-    item.filePath = map.value("filePath").toString();
-    item.coverPath = map.value("coverPath").toString();
+    if (map.contains("id")) {
+        item.id = map.value("id").toString();
+        item.title = map.value("title").toString();
+        item.mp3 = map.value("mp3").toString();
+        item.cover = map.value("cover").toString();
+    } else {
+        item.title = map.value("name").toString();
+        item.mp3 = map.value("filePath").toString();
+        item.cover = map.value("coverPath").toString();
+    }
     return item;
 }
 
@@ -37,8 +43,7 @@ RadioConfig::~RadioConfig() = default;
 
 QString RadioConfig::configFilePath() const
 {
-    QString dir = songsDir();
-    return dir + "/radio_config.json";
+    return musicDir() + "/radio_config.json";
 }
 
 bool RadioConfig::loadConfig()
@@ -68,15 +73,58 @@ bool RadioConfig::loadConfig()
     QJsonArray songsArray = root.value("songs").toArray();
 
     m_songs.clear();
+    bool needMigration = false;
     for (const QJsonValue &val : songsArray) {
         QJsonObject obj = val.toObject();
         QVariantMap map = obj.toVariantMap();
+        if (map.contains("name") && !map.contains("id")) {
+            needMigration = true;
+        }
         m_songs.append(SongItem::fromMap(map));
     }
 
-    reindex();
+    if (needMigration) {
+        migrateFromOldFormat();
+    }
+
     emit songListChanged();
     return true;
+}
+
+void RadioConfig::migrateFromOldFormat()
+{
+    QString baseDir = musicDir();
+
+    for (int i = 0; i < m_songs.size(); ++i) {
+        QString newId = QString("%1").arg(i + 1, 3, 10, QChar('0'));
+        QString oldFilePath = m_songs[i].mp3;
+        QString oldFullPath = baseDir + "/" + oldFilePath;
+        QString subDir = oldFilePath.left(oldFilePath.indexOf("/"));
+        QString oldDir = baseDir + "/" + subDir;
+        QString newDir = baseDir + "/" + newId;
+
+        if (QFile::exists(oldFullPath)) {
+            if (subDir != newId) {
+                QDir(baseDir).rename(subDir, "_migrate_" + subDir);
+                QDir(baseDir).rename("_migrate_" + subDir, newId);
+            }
+            QDir dir(baseDir + "/" + newId);
+            for (const QString &f : dir.entryList(QDir::Files)) {
+                if (f.endsWith(".mp3", Qt::CaseInsensitive) && f != newId + ".mp3") {
+                    QFile::rename(baseDir + "/" + newId + "/" + f, baseDir + "/" + newId + "/" + newId + ".mp3");
+                    break;
+                }
+            }
+        }
+
+        m_songs[i].id = newId;
+        m_songs[i].mp3 = newId + "/" + newId + ".mp3";
+        if (!m_songs[i].cover.isEmpty()) {
+            m_songs[i].cover = newId + "/cover.bin";
+        }
+    }
+
+    saveConfig();
 }
 
 bool RadioConfig::saveConfig()
@@ -91,10 +139,10 @@ bool RadioConfig::saveConfig()
     QJsonArray songsArray;
     for (const SongItem &song : m_songs) {
         QJsonObject obj;
-        obj["index"] = song.index;
-        obj["name"] = song.name;
-        obj["filePath"] = song.filePath;
-        obj["coverPath"] = song.coverPath;
+        obj["id"] = song.id;
+        obj["title"] = song.title;
+        obj["mp3"] = song.mp3;
+        obj["cover"] = song.cover;
         songsArray.append(obj);
     }
 
@@ -121,13 +169,13 @@ int RadioConfig::songCount() const
     return m_songs.size();
 }
 
-void RadioConfig::addSong(const QString &name, const QString &filePath, const QString &coverPath)
+void RadioConfig::addSong(const QString &id, const QString &title, const QString &mp3, const QString &cover)
 {
     SongItem item;
-    item.index = m_songs.size() + 1;
-    item.name = name;
-    item.filePath = filePath;
-    item.coverPath = coverPath;
+    item.id = id;
+    item.title = title;
+    item.mp3 = mp3;
+    item.cover = cover;
     m_songs.append(item);
     emit songListChanged();
 }
@@ -137,8 +185,30 @@ void RadioConfig::removeSong(int index)
     if (index < 0 || index >= m_songs.size()) {
         return;
     }
+
+    QString baseDir = musicDir();
+    QString removedId = m_songs[index].id;
+    QString dirPath = baseDir + "/" + removedId;
+    
+    QDir dir(dirPath);
+    if (dir.exists()) {
+        for (const QString &f : dir.entryList(QDir::Files)) {
+            QFile::remove(dirPath + "/" + f);
+        }
+        dir.removeRecursively();
+    }
+
     m_songs.removeAt(index);
     reindex();
+    emit songListChanged();
+}
+
+void RadioConfig::updateSongCover(int index, const QString &cover)
+{
+    if (index < 0 || index >= m_songs.size()) {
+        return;
+    }
+    m_songs[index].cover = cover;
     emit songListChanged();
 }
 
@@ -162,14 +232,88 @@ void RadioConfig::moveSong(int fromIndex, int toIndex)
 
 void RadioConfig::reindex()
 {
+    QString baseDir = musicDir();
+    QList<QString> oldIds;
+    for (const SongItem &song : m_songs) {
+        oldIds.append(song.id);
+    }
+
+    bool needRename = false;
     for (int i = 0; i < m_songs.size(); ++i) {
-        m_songs[i].index = i + 1;
+        QString newId = QString("%1").arg(i + 1, 3, 10, QChar('0'));
+        if (oldIds[i] != newId) {
+            needRename = true;
+            break;
+        }
+    }
+
+    for (int i = 0; i < m_songs.size(); ++i) {
+        QString newId = QString("%1").arg(i + 1, 3, 10, QChar('0'));
+        m_songs[i].id = newId;
+        m_songs[i].mp3 = newId + "/" + newId + ".mp3";
+        if (!m_songs[i].cover.isEmpty()) {
+            m_songs[i].cover = newId + "/cover.bin";
+        }
+    }
+
+    if (!needRename) {
+        return;
+    }
+
+    for (int i = 0; i < oldIds.size(); ++i) {
+        QString oldPath = baseDir + "/" + oldIds[i];
+        QString tmpPath = baseDir + "/_tmp_" + oldIds[i];
+        if (QDir(oldPath).exists()) {
+            QDir().mkpath(tmpPath);
+            for (const QString &f : QDir(oldPath).entryList(QDir::Files)) {
+                QFile::copy(oldPath + "/" + f, tmpPath + "/" + f);
+            }
+            QDir(oldPath).removeRecursively();
+        }
+    }
+
+    for (int i = 0; i < oldIds.size(); ++i) {
+        QString newId = QString("%1").arg(i + 1, 3, 10, QChar('0'));
+        QString tmpName = "_tmp_" + oldIds[i];
+        QString tmpPath = baseDir + "/" + tmpName;
+        QString newPath = baseDir + "/" + newId;
+        if (QDir(tmpPath).exists()) {
+            QDir(newPath).removeRecursively();
+            QDir().mkpath(newPath);
+            for (const QString &f : QDir(tmpPath).entryList(QDir::Files)) {
+                QFile::copy(tmpPath + "/" + f, newPath + "/" + f);
+            }
+            QDir(tmpPath).removeRecursively();
+        }
+    }
+
+    for (int i = 0; i < m_songs.size(); ++i) {
+        QString newId = m_songs[i].id;
+        QDir dir(baseDir + "/" + newId);
+        bool foundMp3 = false;
+        for (const QString &f : dir.entryList(QDir::Files)) {
+            if (f.endsWith(".mp3", Qt::CaseInsensitive) && f != newId + ".mp3") {
+                QString oldPath = baseDir + "/" + newId + "/" + f;
+                QString newPath = baseDir + "/" + newId + "/" + newId + ".mp3";
+                if (!QFile::rename(oldPath, newPath)) {
+                    emit configError("重命名文件失败: " + oldPath + " -> " + newPath);
+                }
+                foundMp3 = true;
+                break;
+            } else if (f == newId + ".mp3") {
+                foundMp3 = true;
+                break;
+            }
+        }
+        if (!foundMp3) {
+            emit configError("未找到MP3文件: " + baseDir + "/" + newId);
+        }
     }
 }
 
-QString RadioConfig::songsDir() const
+QString RadioConfig::musicDir() const
 {
-    QString dir = QCoreApplication::applicationDirPath() + "/songs";
+    QString dir = QCoreApplication::applicationDirPath() + "/music";
     QDir().mkpath(dir);
     return dir;
 }
@@ -186,23 +330,53 @@ QString RadioConfig::importSong(const QString &srcFilePath)
         return QString();
     }
 
-    QString destDir = songsDir();
-    QString baseName = fi.completeBaseName();
-    QString suffix = fi.suffix();
-    QString fileName = baseName + "." + suffix;
-    QString destPath = destDir + "/" + fileName;
-
-    int counter = 1;
-    while (QFile::exists(destPath)) {
-        fileName = baseName + "_" + QString::number(counter) + "." + suffix;
-        destPath = destDir + "/" + fileName;
-        ++counter;
+    QString baseDir = musicDir();
+    int nextNum = m_songs.size() + 1;
+    for (int i = 1; i <= 999; ++i) {
+        QString subDir = QString("%1").arg(i, 3, 10, QChar('0'));
+        if (!QDir(baseDir).exists(subDir)) {
+            nextNum = i;
+            break;
+        }
     }
+    QString id = QString("%1").arg(nextNum, 3, 10, QChar('0'));
+    QString destDir = baseDir + "/" + id;
+    QDir().mkpath(destDir);
+
+    QString mp3Name = id + ".mp3";
+    QString destPath = destDir + "/" + mp3Name;
 
     if (!QFile::copy(srcFilePath, destPath)) {
         emit configError("复制文件失败: " + srcFilePath + " -> " + destPath);
         return QString();
     }
 
-    return fileName;
+    return id;
+}
+
+QString RadioConfig::importCover(const QString &srcFilePath, const QString &subDir)
+{
+    if (srcFilePath.isEmpty() || subDir.isEmpty()) {
+        return QString();
+    }
+
+    QFileInfo fi(srcFilePath);
+    if (!fi.exists()) {
+        emit configError("封面文件不存在: " + srcFilePath);
+        return QString();
+    }
+
+    QString destDir = musicDir() + "/" + subDir;
+    QDir().mkpath(destDir);
+
+    QString fileName = "cover.bin";
+    QString destPath = destDir + "/" + fileName;
+
+    QFile::remove(destPath);
+    if (!QFile::copy(srcFilePath, destPath)) {
+        emit configError("复制封面失败: " + srcFilePath + " -> " + destPath);
+        return QString();
+    }
+
+    return subDir + "/" + fileName;
 }
