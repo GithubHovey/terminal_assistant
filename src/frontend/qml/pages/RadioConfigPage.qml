@@ -551,7 +551,6 @@ MouseArea {
             if (storedFileName !== "") {
                 var name = storedFileName.replace(/\.mp3$/i, "")
                 songModel.append({
-                    "index": songModel.count + 1,
                     "name": name,
                     "filePath": storedFileName,
                     "album": "",
@@ -564,9 +563,15 @@ MouseArea {
     }
 
     Component.onCompleted: {
+        songModel.clear()
         var songs = radioConfig.getSongList()
         for (var i = 0; i < songs.length; i++) {
-            songModel.append(songs[i])
+            songModel.append({
+                "name": songs[i].name,
+                "filePath": songs[i].filePath,
+                "album": songs[i].album || "",
+                "coverPath": songs[i].coverPath || ""
+            })
         }
     }
 }
