@@ -37,9 +37,8 @@ RadioConfig::~RadioConfig() = default;
 
 QString RadioConfig::configFilePath() const
 {
-    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir().mkpath(configDir);
-    return configDir + "/radio_config.json";
+    QString dir = songsDir();
+    return dir + "/radio_config.json";
 }
 
 bool RadioConfig::loadConfig()
