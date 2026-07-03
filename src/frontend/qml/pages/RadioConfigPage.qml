@@ -13,12 +13,30 @@ Rectangle {
     property int dragToIndex: -1
     property bool isDragging: false
 
+    Timer {
+        id: playAfterLoadTimer
+        interval: 300
+        repeat: false
+        property int savedIndex: -1
+        onTriggered: {
+            mediaPlayer.skipStateReset = true
+            mediaPlayer.stop()
+            mediaPlayer.play()
+            currentPlayingIndex = savedIndex
+        }
+    }
+
     MediaPlayer {
         id: mediaPlayer
         audioOutput: AudioOutput {}
+        property bool skipStateReset: false
+        
         onPlaybackStateChanged: {
             if (playbackState === MediaPlayer.StoppedState) {
-                currentPlayingIndex = -1
+                if (!skipStateReset) {
+                    currentPlayingIndex = -1
+                }
+                skipStateReset = false
             }
         }
     }
@@ -313,22 +331,29 @@ Rectangle {
                                 color: "#FFFFFF"
                             }
 
-                            MouseArea {
-                                id: playMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (isPlaying) {
-                                        mediaPlayer.stop()
-                                        currentPlayingIndex = -1
-                                    } else {
-                                        mediaPlayer.source = "file:///" + radioConfig.songsDir() + "/" + model.filePath
-                                        mediaPlayer.play()
-                                        currentPlayingIndex = index
-                                    }
-                                }
-                            }
+MouseArea {
+                                 id: playMouse
+                                 anchors.fill: parent
+                                 hoverEnabled: true
+                                 cursorShape: Qt.PointingHandCursor
+                                 onClicked: {
+                                     if (isPlaying) {
+                                         mediaPlayer.stop()
+                                         currentPlayingIndex = -1
+                                     } else {
+                                         var newSource = "file:///" + radioConfig.songsDir() + "/" + model.filePath
+                                         if (mediaPlayer.source.toString() === newSource) {
+                                             mediaPlayer.play()
+                                         } else {
+                                             mediaPlayer.source = newSource
+                                             mediaPlayer.play()
+                                             playAfterLoadTimer.savedIndex = index
+                                             playAfterLoadTimer.start()
+                                         }
+                                         currentPlayingIndex = index
+                                     }
+                                 }
+                             }
                         }
 
                         Rectangle {
