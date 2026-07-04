@@ -57,7 +57,7 @@ Rectangle {
                     onClicked: {
                             if (newRoleName.trim() !== "") {
                                 var newId = roleListView.model.count + 1
-                                roleListView.model.append({ roleName: newRoleName.trim(), roleId: newId, canDelete: true })
+                                roleListView.model.append({ roleName: newRoleName.trim(), roleId: newId, canDelete: true, chatBgPath: "" })
                                 roleNameInput.text = ""
                                 newRoleName = ""
                                 addRoleDialog.close()
@@ -229,6 +229,20 @@ Rectangle {
                 
                 onClicked: {
                     avatarDialog.close()
+                }
+            }
+        }
+    }
+    
+    FileDialog {
+        id: chatBgFileDialog
+        title: "选择聊天背景图片"
+        nameFilters: ["PNG 图片 (*.png)"]
+        onAccepted: {
+            var fileUrl = selectedFile.toString()
+            if (fileUrl.toLowerCase().endsWith(".png")) {
+                if (roleListView.currentIndex >= 0) {
+                    roleListView.model.get(roleListView.currentIndex).chatBgPath = fileUrl
                 }
             }
         }
@@ -695,6 +709,103 @@ Rectangle {
                                 
                                 onClicked: {
                                     console.log("打开智能体配置与测试")
+                                }
+                            }
+                        }
+                        
+                        Text {
+                            text: "聊天背景"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#333333"
+                        }
+                        
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.min(171, parent.width * 0.61)
+                                Layout.maximumWidth: 280
+                                color: "#F0F0F0"
+                                border.color: "#D9D9D9"
+                                border.width: 1
+                                radius: 4
+                                clip: true
+                                
+                                Image {
+                                    anchors.fill: parent
+                                    source: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).chatBgPath : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    visible: source !== ""
+                                }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "未设置背景"
+                                    font.pixelSize: 14
+                                    color: "#999999"
+                                    visible: !(roleListView.currentIndex >= 0 && roleListView.model.get(roleListView.currentIndex).chatBgPath !== "")
+                                }
+                            }
+                            
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+                                
+                                Button {
+                                    text: "载入背景"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#FFFFFF"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        chatBgFileDialog.open()
+                                    }
+                                }
+                                
+                                Button {
+                                    text: "清除背景"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                                        border.color: "#D9D9D9"
+                                        border.width: 1
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#333333"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        if (roleListView.currentIndex >= 0) {
+                                            roleListView.model.get(roleListView.currentIndex).chatBgPath = ""
+                                        }
+                                    }
+                                }
+                                
+                                Text {
+                                    text: "PNG 280×171"
+                                    font.pixelSize: 11
+                                    color: "#999999"
                                 }
                             }
                         }
