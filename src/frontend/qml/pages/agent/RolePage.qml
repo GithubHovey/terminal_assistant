@@ -6,10 +6,17 @@ import QtQuick.Dialogs
 Rectangle {
     color: "#FFFFFF"
     
-    property string newRoleName: ""
-    property int deleteIndex: -1
     property bool nfcGenerated: false
     property string nfcResult: ""
+    property int pendingDeleteIndex: -1
+    
+    property var currentRole: characterManager && roleListView.currentIndex >= 0 && roleListView.currentIndex < characterManager.roleCount ? characterManager.roleList[roleListView.currentIndex] : null
+    
+    function currentEnglishName() {
+        if (currentRole && currentRole.englishName)
+            return currentRole.englishName.trim()
+        return ""
+    }
     
     Dialog {
         id: addRoleDialog
@@ -31,7 +38,6 @@ Rectangle {
                 Layout.preferredWidth: 200
                 placeholderText: "角色名称"
                 font.pixelSize: 14
-                onTextChanged: newRoleName = text
             }
             
             RowLayout {
@@ -55,14 +61,12 @@ Rectangle {
                     }
                     
                     onClicked: {
-                            if (newRoleName.trim() !== "") {
-                                var newId = roleListView.model.count + 1
-                                roleListView.model.append({ roleName: newRoleName.trim(), roleId: newId, canDelete: true, chatBgPath: "" })
-                                roleNameInput.text = ""
-                                newRoleName = ""
-                                addRoleDialog.close()
-                            }
+                        if (roleNameInput.text.trim() !== "") {
+                            characterManager.addRole(roleNameInput.text.trim())
+                            roleNameInput.text = ""
+                            addRoleDialog.close()
                         }
+                    }
                 }
                 
                 Button {
@@ -86,7 +90,6 @@ Rectangle {
                     
                     onClicked: {
                         roleNameInput.text = ""
-                        newRoleName = ""
                         addRoleDialog.close()
                     }
                 }
@@ -108,7 +111,7 @@ Rectangle {
             spacing: 10
             
             Text {
-                text: "确定要删除该角色吗？"
+                text: "确定要删除该角色吗？相关资源文件将一并删除。"
                 font.pixelSize: 14
                 color: "#333333"
             }
@@ -134,11 +137,14 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        if (deleteIndex >= 0) {
-                            roleListView.model.remove(deleteIndex)
-                            deleteIndex = -1
-                            deleteConfirmDialog.close()
+                        if (pendingDeleteIndex >= 0) {
+                            characterManager.removeRole(pendingDeleteIndex)
+                            pendingDeleteIndex = -1
+                            if (roleListView.currentIndex >= characterManager.roleCount) {
+                                roleListView.currentIndex = characterManager.roleCount - 1
+                            }
                         }
+                        deleteConfirmDialog.close()
                     }
                 }
                 
@@ -162,7 +168,7 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        deleteIndex = -1
+                        pendingDeleteIndex = -1
                         deleteConfirmDialog.close()
                     }
                 }
@@ -203,8 +209,7 @@ Rectangle {
                 }
                 
                 onClicked: {
-                    console.log("选择头像图片")
-                    avatarDialog.close()
+                    avatarFileDialog.open()
                 }
             }
             
@@ -235,15 +240,55 @@ Rectangle {
     }
     
     FileDialog {
+        id: avatarFileDialog
+        title: "选择头像图片"
+        nameFilters: ["PNG 图片 (*.png)"]
+        onAccepted: {
+            var name = currentRole ? currentRole.name : ""
+            if (name !== "" && characterManager) {
+                var filePath = selectedFile.toString()
+                var result = characterManager.importAvatar(filePath, name)
+                if (result !== "") {
+                    logger.logInfo("头像导入成功: " + result)
+                }
+            } else {
+                logger.logWarning("请先选择角色")
+            }
+        }
+    }
+    
+    FileDialog {
         id: chatBgFileDialog
         title: "选择聊天背景图片"
         nameFilters: ["PNG 图片 (*.png)"]
         onAccepted: {
-            var fileUrl = selectedFile.toString()
-            if (fileUrl.toLowerCase().endsWith(".png")) {
-                if (roleListView.currentIndex >= 0) {
-                    roleListView.model.get(roleListView.currentIndex).chatBgPath = fileUrl
+            var name = currentRole ? currentRole.name : ""
+            if (name !== "" && characterManager) {
+                var filePath = selectedFile.toString()
+                var result = characterManager.importChatBg(filePath, name)
+                if (result !== "") {
+                    logger.logInfo("聊天背景导入成功: " + result)
                 }
+            } else {
+                logger.logWarning("请先选择角色")
+            }
+        }
+    }
+    
+    FileDialog {
+        id: voiceMaterialFileDialog
+        title: "选择声音复刻素材"
+        nameFilters: ["音频文件 (*.wav *.mp3 *.flac)"]
+        onAccepted: {
+            var name = currentRole ? currentRole.name : ""
+            if (name !== "" && characterManager) {
+                var filePath = selectedFile.toString()
+                var result = characterManager.importVoiceMaterial(filePath, name)
+                if (result !== "") {
+                    logger.logInfo("声音素材导入成功: " + result)
+                }
+            } else {
+                logger.logWarning("请先设置角色英文名")
             }
         }
     }
@@ -281,14 +326,21 @@ Rectangle {
                     Layout.fillHeight: true
                     clip: true
                     currentIndex: -1
-                    
-                    model: ListModel {
-                    }
+                    model: characterManager ? characterManager.roleList : []
                     
                     delegate: Rectangle {
                         width: parent.width
                         height: 90
                         color: roleListView.currentIndex === index ? "#E6F7FF" : (itemMouseArea.containsMouse ? "#F0F0F0" : "transparent")
+                        
+                        MouseArea {
+                            id: itemMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                roleListView.currentIndex = index
+                            }
+                        }
                         
                         Rectangle {
                             anchors.top: parent.top
@@ -299,7 +351,8 @@ Rectangle {
                             height: 20
                             radius: 10
                             color: deleteMouseArea.containsMouse ? "#FF4D4F" : "#FF7875"
-                            visible: canDelete && itemMouseArea.containsMouse
+                            visible: itemMouseArea.containsMouse
+                            z: 1
                             
                             Text {
                                 anchors.centerIn: parent
@@ -314,7 +367,7 @@ Rectangle {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 onClicked: {
-                                    deleteIndex = index
+                                    pendingDeleteIndex = index
                                     deleteConfirmDialog.open()
                                 }
                             }
@@ -332,7 +385,7 @@ Rectangle {
                                 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: roleName.charAt(0).toUpperCase()
+                                    text: modelData.name.charAt(0).toUpperCase()
                                     font.pixelSize: 24
                                     font.bold: true
                                     color: "#FFFFFF"
@@ -340,19 +393,10 @@ Rectangle {
                             }
                             
                             Text {
-                                text: roleName
+                                text: modelData.name
                                 font.pixelSize: 14
                                 color: roleListView.currentIndex === index ? "#1890FF" : "#333333"
                                 Layout.alignment: Qt.AlignHCenter
-                            }
-                        }
-                        
-                        MouseArea {
-                            id: itemMouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked: {
-                                roleListView.currentIndex = index
                             }
                         }
                     }
@@ -394,7 +438,7 @@ Rectangle {
             Layout.fillHeight: true
             color: "#FFFFFF"
             
-            property bool hasSelectedRole: roleListView.currentIndex >= 0
+            property bool hasSelectedRole: roleListView.currentIndex >= 0 && currentRole !== null
             
             Text {
                 anchors.centerIn: parent
@@ -429,13 +473,30 @@ Rectangle {
                                 Layout.preferredHeight: 80
                                 radius: 40
                                 color: "#CCCCCC"
+                                clip: true
+                                
+                                Image {
+                                    anchors.fill: parent
+                                    source: {
+                                        if (!characterManager) return ""
+                                        var name = currentRole ? currentRole.name : ""
+                                        if (name !== "") {
+                                            var path = characterManager.avatarPath(name)
+                                            if (path !== "") return "file:///" + path
+                                        }
+                                        return ""
+                                    }
+                                    fillMode: Image.PreserveAspectCrop
+                                    visible: source !== ""
+                                }
                                 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).roleName.charAt(0).toUpperCase() : ""
+                                    text: currentRole ? currentRole.name.charAt(0).toUpperCase() : ""
                                     font.pixelSize: 28
                                     font.bold: true
                                     color: "#FFFFFF"
+                                    visible: parent.children[0].source === ""
                                 }
                                 
                                 MouseArea {
@@ -462,7 +523,12 @@ Rectangle {
                                     Layout.fillWidth: true
                                     placeholderText: "输入角色名称"
                                     font.pixelSize: 14
-                                    text: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).roleName : ""
+                                    text: currentRole ? currentRole.name : ""
+                                    onEditingFinished: {
+                                        if (roleListView.currentIndex >= 0) {
+                                            characterManager.updateRoleName(roleListView.currentIndex, text)
+                                        }
+                                    }
                                 }
                                 
                                 Button {
@@ -507,6 +573,12 @@ Rectangle {
                                 placeholderText: "输入大写英文名"
                                 font.pixelSize: 14
                                 maximumLength: 8
+                                text: currentRole ? currentRole.englishName : ""
+                                onEditingFinished: {
+                                    if (roleListView.currentIndex >= 0) {
+                                        characterManager.updateRoleEnglishName(roleListView.currentIndex, text)
+                                    }
+                                }
                             }
                         }
                         
@@ -555,6 +627,14 @@ Rectangle {
                                     placeholderText: "选择声音复刻素材文件"
                                     font.pixelSize: 14
                                     readOnly: true
+                                    text: {
+                                        if (!characterManager) return ""
+                                        var name = currentRole ? currentRole.name : ""
+                                        if (name !== "") {
+                                            return characterManager.voiceMaterialPath(name)
+                                        }
+                                        return ""
+                                    }
                                 }
                                 
                                 Button {
@@ -575,7 +655,7 @@ Rectangle {
                                     }
                                     
                                     onClicked: {
-                                        console.log("选择声音素材文件")
+                                        voiceMaterialFileDialog.open()
                                     }
                                 }
                                 
@@ -667,6 +747,12 @@ Rectangle {
                                 Layout.fillWidth: true
                                 placeholderText: "输入智能体API地址"
                                 font.pixelSize: 14
+                                text: currentRole ? currentRole.agentUrl : ""
+                                onEditingFinished: {
+                                    if (roleListView.currentIndex >= 0) {
+                                        characterManager.updateRoleAgentUrl(roleListView.currentIndex, text)
+                                    }
+                                }
                             }
                             
                             Text {
@@ -680,6 +766,12 @@ Rectangle {
                                 Layout.fillWidth: true
                                 placeholderText: "输入智能体ID"
                                 font.pixelSize: 14
+                                text: currentRole ? currentRole.agentId : ""
+                                onEditingFinished: {
+                                    if (roleListView.currentIndex >= 0) {
+                                        characterManager.updateRoleAgentId(roleListView.currentIndex, text)
+                                    }
+                                }
                             }
                         }
                         
@@ -736,7 +828,15 @@ Rectangle {
                                 
                                 Image {
                                     anchors.fill: parent
-                                    source: roleListView.currentIndex >= 0 ? roleListView.model.get(roleListView.currentIndex).chatBgPath : ""
+                                    source: {
+                                        if (!characterManager) return ""
+                                        var name = currentRole ? currentRole.name : ""
+                                        if (name !== "") {
+                                            var path = characterManager.chatBgPath(name)
+                                            if (path !== "") return "file:///" + path
+                                        }
+                                        return ""
+                                    }
                                     fillMode: Image.PreserveAspectCrop
                                     visible: source !== ""
                                 }
@@ -746,7 +846,13 @@ Rectangle {
                                     text: "未设置背景"
                                     font.pixelSize: 14
                                     color: "#999999"
-                                    visible: !(roleListView.currentIndex >= 0 && roleListView.model.get(roleListView.currentIndex).chatBgPath !== "")
+                                    visible: {
+                                        if (!characterManager) return true
+                                        var name = currentRole ? currentRole.name : ""
+                                        if (name === "") return true
+                                        var path = characterManager.chatBgPath(name)
+                                        return path === ""
+                                    }
                                 }
                             }
                             
@@ -796,8 +902,9 @@ Rectangle {
                                     }
                                     
                                     onClicked: {
-                                        if (roleListView.currentIndex >= 0) {
-                                            roleListView.model.get(roleListView.currentIndex).chatBgPath = ""
+                                        var name = currentRole ? currentRole.name : ""
+                                        if (name !== "") {
+                                            characterManager.removeChatBg(name)
                                         }
                                     }
                                 }
@@ -836,8 +943,8 @@ Rectangle {
                                 
                                 onClicked: {
                                     nfcGenerated = true
-                                    if (roleListView.currentIndex >= 0)
-                                        nfcResult = "NFC_INFO:role=" + roleListView.model.get(roleListView.currentIndex).roleName + ",id=" + roleListView.model.get(roleListView.currentIndex).roleId
+                                    if (currentRole)
+                                        nfcResult = "NFC_INFO:role=" + currentRole.name + ",id=" + currentRole.id
                                 }
                             }
                         }
@@ -919,7 +1026,14 @@ Rectangle {
                                 placeholderText: "输入参考提示词..."
                                 font.pixelSize: 14
                                 wrapMode: TextArea.Wrap
+                                text: currentRole ? currentRole.prompt : ""
                                 background: Rectangle { color: "transparent" }
+                                
+                                onEditingFinished: {
+                                    if (roleListView.currentIndex >= 0) {
+                                        characterManager.updateRolePrompt(roleListView.currentIndex, text)
+                                    }
+                                }
                             }
                         }
                         

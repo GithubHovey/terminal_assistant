@@ -14,6 +14,7 @@ set(BACKEND_SOURCES
     src/backend/basic/BasicConfig.cpp
     src/backend/agent/AgentConfig.cpp
     src/backend/radio/RadioConfig.cpp
+    src/backend/character/CharacterManager.cpp
     src/backend/maintenance/MaintenanceManager.cpp
     src/backend/python/PythonRunner.cpp
     src/backend/logger/Logger.cpp
@@ -26,6 +27,7 @@ set(BACKEND_HEADERS
     src/backend/basic/BasicConfig.h
     src/backend/agent/AgentConfig.h
     src/backend/radio/RadioConfig.h
+    src/backend/character/CharacterManager.h
     src/backend/maintenance/MaintenanceManager.h
     src/backend/python/PythonRunner.h
     src/backend/logger/Logger.h

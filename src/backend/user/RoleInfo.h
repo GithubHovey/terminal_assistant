@@ -2,6 +2,7 @@
 #define ROLEINFO_H
 
 #include <QString>
+#include <QVariantMap>
 
 class RoleInfo
 {
@@ -19,26 +20,33 @@ public:
     bool isUser() const;
     void setIsUser(bool isUser);
 
-    QString avatarBinPath() const;
-    void setAvatarBinPath(const QString &path);
+    QString englishName() const;
+    void setEnglishName(const QString &englishName);
 
     QString agentId() const;
     void setAgentId(const QString &agentId);
 
+    QString agentUrl() const;
+    void setAgentUrl(const QString &agentUrl);
+
     QString voiceCloneId() const;
     void setVoiceCloneId(const QString &voiceCloneId);
 
-    QString voiceCloneMaterialPath() const;
-    void setVoiceCloneMaterialPath(const QString &path);
+    QString prompt() const;
+    void setPrompt(const QString &prompt);
+
+    QVariantMap toMap() const;
+    static RoleInfo fromMap(const QVariantMap &map);
 
 private:
     QString m_name;
     int m_id;
     bool m_isUser;
-    QString m_avatarBinPath;
+    QString m_englishName;
     QString m_agentId;
+    QString m_agentUrl;
     QString m_voiceCloneId;
-    QString m_voiceCloneMaterialPath;
+    QString m_prompt;
 };
 
 #endif // ROLEINFO_H

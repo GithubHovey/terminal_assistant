@@ -6,6 +6,7 @@
 #include <QFontDatabase>
 #include "src/backend/logger/Logger.h"
 #include "src/backend/radio/RadioConfig.h"
+#include "src/backend/character/CharacterManager.h"
 
 using namespace Qt::StringLiterals;
 
@@ -26,6 +27,10 @@ int main(int argc, char *argv[])
     RadioConfig radioConfig;
     radioConfig.loadConfig();
     engine.rootContext()->setContextProperty("radioConfig", &radioConfig);
+    
+    CharacterManager characterManager;
+    characterManager.loadConfig();
+    engine.rootContext()->setContextProperty("characterManager", &characterManager);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     
