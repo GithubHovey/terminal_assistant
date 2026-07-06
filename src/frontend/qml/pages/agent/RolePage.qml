@@ -13,8 +13,15 @@ Rectangle {
     property var currentRole: characterManager && roleListView.currentIndex >= 0 && roleListView.currentIndex < characterManager.roleCount ? characterManager.roleList[roleListView.currentIndex] : null
     
     function currentEnglishName() {
-        if (currentRole && currentRole.englishName)
-            return currentRole.englishName.trim()
+        // 直接从 backend 获取最新的英文名，避免使用过期的 currentRole 快照
+        if (characterManager && roleListView.currentIndex >= 0) {
+            var roles = characterManager.getRoleList()
+            if (roleListView.currentIndex < roles.length) {
+                var role = roles[roleListView.currentIndex]
+                if (role && role.englishName)
+                    return role.englishName.trim()
+            }
+        }
         return ""
     }
     
@@ -962,7 +969,7 @@ Rectangle {
                             TextField {
                                 id: englishNameEdit
                                 Layout.fillWidth: true
-                                placeholderText: "输入大写英文名"
+                                placeholderText: "输入8位以内英文名"
                                 font.pixelSize: 14
                                 maximumLength: 8
                                 text: currentRole ? currentRole.englishName : ""
