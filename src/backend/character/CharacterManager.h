@@ -12,6 +12,7 @@ class CharacterManager : public QObject
     Q_OBJECT
     Q_PROPERTY(QVariantList roleList READ getRoleList NOTIFY roleListChanged)
     Q_PROPERTY(int roleCount READ roleCount NOTIFY roleListChanged)
+    Q_PROPERTY(int avatarVersion READ avatarVersion NOTIFY avatarVersionChanged)
 
 public:
     explicit CharacterManager(QObject *parent = nullptr);
@@ -34,25 +35,31 @@ public:
     Q_INVOKABLE QString roleDir(const QString &name) const;
     Q_INVOKABLE bool ensureRoleDir(const QString &name);
 
-    Q_INVOKABLE QString importAvatar(const QString &srcFilePath, const QString &name);
     Q_INVOKABLE QString importChatBg(const QString &srcFilePath, const QString &name);
     Q_INVOKABLE bool removeChatBg(const QString &name);
     Q_INVOKABLE QString importVoiceMaterial(const QString &srcFilePath, const QString &name);
     Q_INVOKABLE QString importPreviewAudio(const QString &srcFilePath, const QString &name);
 
     Q_INVOKABLE QString avatarPath(const QString &name) const;
+    Q_INVOKABLE QString avatarBinPath(const QString &name) const;
     Q_INVOKABLE QString chatBgPath(const QString &name) const;
     Q_INVOKABLE QString voiceMaterialPath(const QString &name) const;
     Q_INVOKABLE QString previewAudioPath(const QString &name) const;
 
+    Q_INVOKABLE int avatarVersion() const;
+    Q_INVOKABLE void incrementAvatarVersion();
+
 signals:
     void roleListChanged();
     void importError(const QString &error);
+    void avatarVersionChanged();
 
 private:
     QList<RoleInfo> m_roles;
+    int m_avatarVersion = 0;
     QString configFilePath() const;
     int nextId() const;
+    QString findEnglishNameByName(const QString &name) const;
 };
 
 #endif // CHARACTERMANAGER_H

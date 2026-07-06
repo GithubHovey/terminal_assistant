@@ -7,6 +7,8 @@
 #include "src/backend/logger/Logger.h"
 #include "src/backend/radio/RadioConfig.h"
 #include "src/backend/character/CharacterManager.h"
+#include "src/backend/image/ImageProcessor.h"
+#include "src/backend/python/PythonRunner.h"
 
 using namespace Qt::StringLiterals;
 
@@ -31,6 +33,12 @@ int main(int argc, char *argv[])
     CharacterManager characterManager;
     characterManager.loadConfig();
     engine.rootContext()->setContextProperty("characterManager", &characterManager);
+    
+    ImageProcessor imageProcessor;
+    engine.rootContext()->setContextProperty("imageProcessor", &imageProcessor);
+    
+    PythonRunner pythonRunner;
+    engine.rootContext()->setContextProperty("pythonRunner", &pythonRunner);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     

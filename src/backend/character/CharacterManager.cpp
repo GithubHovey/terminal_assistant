@@ -179,7 +179,6 @@ void CharacterManager::updateRoleName(int index, const QString &name)
     }
     m_roles[index].setName(name);
     saveConfig();
-    emit roleListChanged();
 }
 
 void CharacterManager::updateRoleEnglishName(int index, const QString &englishName)
@@ -187,10 +186,54 @@ void CharacterManager::updateRoleEnglishName(int index, const QString &englishNa
     if (index < 0 || index >= m_roles.size()) {
         return;
     }
-    m_roles[index].setEnglishName(englishName.toUpper());
+    
+    QString oldEnglishName = m_roles[index].englishName();
+    QString newEnglishName = englishName.toUpper();
+    
+    // 如果英文名没有变化，直接返回
+    if (oldEnglishName == newEnglishName) {
+        return;
+    }
+    
+    // 如果旧英文名不为空，重命名相关文件
+    if (!oldEnglishName.isEmpty()) {
+        QString dir = roleDir(m_roles[index].name());
+        QDir dirObj(dir);
+        
+        if (dirObj.exists()) {
+            // 重命名 PNG 文件
+            QString oldPngPath = dir + "/" + oldEnglishName + ".png";
+            QString newPngPath = dir + "/" + newEnglishName + ".png";
+            if (QFile::exists(oldPngPath)) {
+                if (QFile::exists(newPngPath)) {
+                    QFile::remove(newPngPath);
+                }
+                if (QFile::rename(oldPngPath, newPngPath)) {
+                    Logger::instance().logInfo("重命名头像: " + oldPngPath + " -> " + newPngPath);
+                } else {
+                    Logger::instance().logError("重命名头像失败: " + oldPngPath);
+                }
+            }
+            
+            // 重命名 BIN 文件
+            QString oldBinPath = dir + "/" + oldEnglishName + ".bin";
+            QString newBinPath = dir + "/" + newEnglishName + ".bin";
+            if (QFile::exists(oldBinPath)) {
+                if (QFile::exists(newBinPath)) {
+                    QFile::remove(newBinPath);
+                }
+                if (QFile::rename(oldBinPath, newBinPath)) {
+                    Logger::instance().logInfo("重命名BIN: " + oldBinPath + " -> " + newBinPath);
+                } else {
+                    Logger::instance().logError("重命名BIN失败: " + oldBinPath);
+                }
+            }
+        }
+    }
+    
+    m_roles[index].setEnglishName(newEnglishName);
     ensureRoleDir(m_roles[index].name());
     saveConfig();
-    emit roleListChanged();
 }
 
 void CharacterManager::updateRoleAgentId(int index, const QString &agentId)
@@ -200,7 +243,6 @@ void CharacterManager::updateRoleAgentId(int index, const QString &agentId)
     }
     m_roles[index].setAgentId(agentId);
     saveConfig();
-    emit roleListChanged();
 }
 
 void CharacterManager::updateRoleAgentUrl(int index, const QString &agentUrl)
@@ -210,7 +252,6 @@ void CharacterManager::updateRoleAgentUrl(int index, const QString &agentUrl)
     }
     m_roles[index].setAgentUrl(agentUrl);
     saveConfig();
-    emit roleListChanged();
 }
 
 void CharacterManager::updateRolePrompt(int index, const QString &prompt)
@@ -220,37 +261,6 @@ void CharacterManager::updateRolePrompt(int index, const QString &prompt)
     }
     m_roles[index].setPrompt(prompt);
     saveConfig();
-    emit roleListChanged();
-}
-
-QString CharacterManager::importAvatar(const QString &srcFilePath, const QString &name)
-{
-    if (srcFilePath.isEmpty() || name.isEmpty()) {
-        return QString();
-    }
-
-    QFileInfo fi(srcFilePath);
-    if (!fi.exists()) {
-        emit importError("Source file does not exist: " + srcFilePath);
-        return QString();
-    }
-
-    if (!ensureRoleDir(name)) {
-        return QString();
-    }
-
-    QString dest = roleDir(name) + "/avatar.png";
-    if (QFile::exists(dest)) {
-        QFile::remove(dest);
-    }
-
-    if (!QFile::copy(srcFilePath, dest)) {
-        emit importError("Failed to copy avatar: " + srcFilePath);
-        return QString();
-    }
-
-    Logger::instance().logInfo("Imported avatar for " + name + ": " + dest);
-    return dest;
 }
 
 QString CharacterManager::importChatBg(const QString &srcFilePath, const QString &name)
@@ -366,7 +376,24 @@ QString CharacterManager::avatarPath(const QString &name) const
     if (name.isEmpty()) {
         return QString();
     }
-    QString path = roleDir(name) + "/avatar.png";
+    QString englishName = findEnglishNameByName(name);
+    if (englishName.isEmpty()) {
+        return QString();
+    }
+    QString path = roleDir(name) + "/" + englishName + ".png";
+    return QFile::exists(path) ? path : QString();
+}
+
+QString CharacterManager::avatarBinPath(const QString &name) const
+{
+    if (name.isEmpty()) {
+        return QString();
+    }
+    QString englishName = findEnglishNameByName(name);
+    if (englishName.isEmpty()) {
+        return QString();
+    }
+    QString path = roleDir(name) + "/" + englishName + ".bin";
     return QFile::exists(path) ? path : QString();
 }
 
@@ -395,4 +422,25 @@ QString CharacterManager::previewAudioPath(const QString &name) const
     }
     QString path = roleDir(name) + "/preview.wav";
     return QFile::exists(path) ? path : QString();
+}
+
+QString CharacterManager::findEnglishNameByName(const QString &name) const
+{
+    for (const RoleInfo &role : m_roles) {
+        if (role.name() == name) {
+            return role.englishName();
+        }
+    }
+    return QString();
+}
+
+int CharacterManager::avatarVersion() const
+{
+    return m_avatarVersion;
+}
+
+void CharacterManager::incrementAvatarVersion()
+{
+    m_avatarVersion++;
+    emit avatarVersionChanged();
 }
