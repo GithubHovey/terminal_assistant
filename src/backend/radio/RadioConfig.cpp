@@ -318,6 +318,27 @@ QString RadioConfig::musicDir() const
     return dir;
 }
 
+QString RadioConfig::songDir(const QString &songId) const
+{
+    if (songId.isEmpty()) {
+        return QString();
+    }
+    return musicDir() + "/" + songId;
+}
+
+bool RadioConfig::ensureSongDir(const QString &songId)
+{
+    if (songId.isEmpty()) {
+        return false;
+    }
+    QString dir = songDir(songId);
+    if (!QDir().mkpath(dir)) {
+        emit configError("Failed to create song directory: " + dir);
+        return false;
+    }
+    return true;
+}
+
 QString RadioConfig::importSong(const QString &srcFilePath)
 {
     if (srcFilePath.isEmpty()) {
@@ -379,4 +400,15 @@ QString RadioConfig::importCover(const QString &srcFilePath, const QString &subD
     }
 
     return subDir + "/" + fileName;
+}
+
+int RadioConfig::coverVersion() const
+{
+    return m_coverVersion;
+}
+
+void RadioConfig::incrementCoverVersion()
+{
+    m_coverVersion++;
+    emit coverVersionChanged();
 }

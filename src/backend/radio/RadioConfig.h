@@ -21,6 +21,7 @@ class RadioConfig : public QObject
     Q_OBJECT
     Q_PROPERTY(QVariantList songList READ getSongList NOTIFY songListChanged)
     Q_PROPERTY(int songCount READ songCount NOTIFY songListChanged)
+    Q_PROPERTY(int coverVersion READ coverVersion NOTIFY coverVersionChanged)
 
 public:
     explicit RadioConfig(QObject *parent = nullptr);
@@ -37,15 +38,21 @@ public:
     Q_INVOKABLE void updateSongCover(int index, const QString &cover);
     Q_INVOKABLE void reindex();
     Q_INVOKABLE QString musicDir() const;
+    Q_INVOKABLE QString songDir(const QString &songId) const;
+    Q_INVOKABLE bool ensureSongDir(const QString &songId);
     Q_INVOKABLE QString importSong(const QString &srcFilePath);
     Q_INVOKABLE QString importCover(const QString &srcFilePath, const QString &subDir);
+    Q_INVOKABLE int coverVersion() const;
+    Q_INVOKABLE void incrementCoverVersion();
 
 signals:
     void songListChanged();
     void configError(const QString &error);
+    void coverVersionChanged();
 
 private:
     QList<SongItem> m_songs;
+    int m_coverVersion = 0;
     QString configFilePath() const;
     void migrateFromOldFormat();
 };

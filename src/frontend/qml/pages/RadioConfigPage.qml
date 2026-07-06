@@ -271,7 +271,11 @@ Rectangle {
                     Image {
                         id: coverImage
                         anchors.fill: parent
-                        source: model.cover ? "file:///" + radioConfig.musicDir() + "/" + model.cover : ""
+                        source: {
+                            if (!model.cover || !radioConfig) return ""
+                            var path = "file:///" + radioConfig.musicDir() + "/" + model.cover
+                            return path + "?v=" + radioConfig.coverVersion
+                        }
                         fillMode: Image.PreserveAspectCrop
                         visible: model.cover && status === Image.Ready
                     }
@@ -568,15 +572,14 @@ Rectangle {
 
     FileDialog {
         id: coverFileDialog
-        title: "\u9009\u62E9\u5C01\u9762\u56FE\u7247 (\u53EF\u8DF3\u8FC7)"
-        nameFilters: ["\u56FE\u7247\u6587\u4EF6 (*.jpg *.jpeg *.png *.bmp *.bin)"]
+        title: "选择封面图片 (可跳过)"
+        nameFilters: ["图片文件 (*.png)"]
         onAccepted: {
             var srcPath = selectedFile.toString()
-            if (srcPath.startsWith("file:///")) {
-                srcPath = srcPath.substring(8)
-            }
-            var storedCoverPath = radioConfig.importCover(srcPath, pendingImportId)
-            finishImport(storedCoverPath)
+            // 打开裁剪对话框而不是直接导入
+            coverCropDialog.sourceImagePath = srcPath
+            coverCropDialog.songId = pendingImportId
+            coverCropDialog.open()
         }
         onRejected: {
             finishImport("")
@@ -593,6 +596,327 @@ Rectangle {
             radioConfig.saveConfig()
             pendingImportId = ""
             pendingImportTitle = ""
+        }
+    }
+
+    Dialog {
+        id: coverCropDialog
+        title: "调整封面"
+        modal: true
+        anchors.centerIn: parent
+        width: 320
+        height: 420
+        
+        property string sourceImagePath: ""
+        property string songId: ""  // e.g., "001"
+        property real scaleValue: 1.0
+        property real offsetX: 0
+        property real offsetY: 0
+        
+        onOpened: {
+            console.log("coverCropDialog opened with source:", sourceImagePath, "songId:", songId)
+            scaleValue = 1.0
+            offsetX = 0
+            offsetY = 0
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 15
+            
+            // 方形预览区域 (200x200)
+            Item {
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 200
+                Layout.alignment: Qt.AlignHCenter
+                
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#F0F0F0"
+                    border.color: "#D9D9D9"
+                    border.width: 1
+                }
+                
+                Rectangle {
+                    id: coverClipMask
+                    anchors.fill: parent
+                    color: "transparent"
+                    clip: true
+                    
+                    Image {
+                        id: coverCropImage
+                        width: parent.width
+                        height: parent.height
+                        source: coverCropDialog.sourceImagePath
+                        fillMode: Image.PreserveAspectCrop
+                        scale: coverCropDialog.scaleValue
+                        x: (parent.width - width) / 2 + coverCropDialog.offsetX
+                        y: (parent.height - height) / 2 + coverCropDialog.offsetY
+                        
+                        onStatusChanged: {
+                            if (status === Image.Ready) {
+                                console.log("Cover image loaded:", source, "size:", sourceSize)
+                            } else if (status === Image.Error) {
+                                console.log("Cover image load error:", source)
+                            }
+                        }
+                    }
+                }
+                
+                // 方形边框（上层）
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "#1890FF"
+                    border.width: 2
+                }
+                
+                // 拖拽交互层（最上层）
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.OpenHandCursor
+                    property point lastPos
+                    property bool dragging: false
+                    
+                    onPressed: {
+                        console.log("MouseArea pressed at:", mouseX, mouseY)
+                        dragging = true
+                        lastPos = Qt.point(mouseX, mouseY)
+                        cursorShape = Qt.ClosedHandCursor
+                    }
+                    
+                    onPositionChanged: {
+                        if (dragging) {
+                            var dx = mouseX - lastPos.x
+                            var dy = mouseY - lastPos.y
+                            console.log("Dragging: dx=", dx, "dy=", dy, "old offset=", coverCropDialog.offsetX, coverCropDialog.offsetY)
+                            coverCropDialog.offsetX += dx
+                            coverCropDialog.offsetY += dy
+                            lastPos = Qt.point(mouseX, mouseY)
+                            console.log("New offset:", coverCropDialog.offsetX, coverCropDialog.offsetY)
+                        }
+                    }
+                    
+                    onReleased: {
+                        console.log("MouseArea released")
+                        dragging = false
+                        cursorShape = Qt.OpenHandCursor
+                    }
+                }
+            }
+            
+            // 缩放滑块
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text {
+                    text: "缩放:"
+                    font.pixelSize: 12
+                    color: "#666666"
+                }
+                
+                Slider {
+                    id: coverScaleSlider
+                    Layout.fillWidth: true
+                    from: 0.5
+                    to: 3.0
+                    value: 1.0
+                    stepSize: 0.1
+                    
+                    onValueChanged: {
+                        coverCropDialog.scaleValue = value
+                        console.log("Scale changed to:", value)
+                    }
+                }
+                
+                Text {
+                    text: coverScaleSlider.value.toFixed(1)
+                    font.pixelSize: 12
+                    color: "#666666"
+                    Layout.preferredWidth: 30
+                }
+            }
+            
+            // 提示文字
+            Text {
+                text: "拖拽移动图片，滑块调整缩放"
+                font.pixelSize: 11
+                color: "#999999"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            // 按钮
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Item { Layout.fillWidth: true }
+                
+                Button {
+                    text: "确定"
+                    font.pixelSize: 14
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        console.log("确定按钮被点击")
+                        
+                        try {
+                            var songId = coverCropDialog.songId
+                            
+                            if (songId === "") {
+                                logger.logWarning("歌曲ID为空")
+                                return
+                            }
+                            
+                            if (coverCropDialog.sourceImagePath === "") {
+                                logger.logWarning("未选择封面图片")
+                                return
+                            }
+                            
+                            // 转换 URL 为本地路径
+                            var inputPath = coverCropDialog.sourceImagePath
+                            console.log("原始路径:", inputPath)
+                            
+                            // 移除 file:/// 前缀
+                            if (inputPath.startsWith("file:///")) {
+                                inputPath = inputPath.substring(8)
+                            } else if (inputPath.startsWith("file://")) {
+                                inputPath = inputPath.substring(7)
+                            }
+                            
+                            // Windows 路径处理：/D:/... -> D:/...
+                            if (inputPath.length > 2 && inputPath.charAt(0) === "/" && inputPath.charAt(2) === ":") {
+                                inputPath = inputPath.substring(1)
+                            }
+                            
+                            console.log("转换后路径:", inputPath)
+                            
+                            // 计算输出路径
+                            var songDir = radioConfig.songDir(songId)
+                            var pngPath = songDir + "/" + songId + ".png"
+                            var binPath = songDir + "/" + songId + ".bin"
+                            
+                            console.log("songDir:", songDir)
+                            console.log("pngPath:", pngPath)
+                            console.log("binPath:", binPath)
+                            console.log("offsetX:", coverCropDialog.offsetX, "offsetY:", coverCropDialog.offsetY)
+                            console.log("scaleValue:", coverCropDialog.scaleValue)
+                            logger.logInfo("开始处理封面: " + pngPath)
+                            
+                            // 确保歌曲目录存在
+                            radioConfig.ensureSongDir(songId)
+                            
+                            // 验证 imageProcessor 是否存在
+                            if (typeof imageProcessor === "undefined" || !imageProcessor) {
+                                logger.logError("imageProcessor 未注册")
+                                return
+                            }
+                            
+                            if (typeof imageProcessor.cropRectangular !== "function") {
+                                logger.logError("cropRectangular 函数不存在")
+                                return
+                            }
+                            
+                            // 调用 C++ 裁剪生成 PNG
+                            var success = imageProcessor.cropRectangular(
+                                inputPath,
+                                pngPath,
+                                160,  // targetWidth
+                                160,  // targetHeight
+                                coverCropDialog.offsetX,
+                                coverCropDialog.offsetY,
+                                coverCropDialog.scaleValue,
+                                200,  // previewWidth
+                                200   // previewHeight
+                            )
+                            
+                            console.log("cropRectangular 返回:", success)
+                            
+                            if (success) {
+                                logger.logInfo("PNG裁剪成功，开始转换为BIN...")
+                                
+                                // 验证 pythonRunner 是否存在
+                                if (typeof pythonRunner === "undefined" || !pythonRunner) {
+                                    logger.logError("pythonRunner 未注册")
+                                    return
+                                }
+                                
+                                // 调用 Python 转换为 BIN
+                                var binSuccess = pythonRunner.runScript("convert_image", [
+                                    "--type", "cover",
+                                    "--input", pngPath,
+                                    "--output", binPath
+                                ])
+                                
+                                console.log("runScript 返回:", binSuccess)
+                                
+                                if (binSuccess) {
+                                    logger.logInfo("封面处理完成: " + binPath)
+                                    // 更新封面路径
+                                    var coverPath = songId + "/" + songId + ".png"
+                                    // 更新模型中的数据
+                                    for (var i = 0; i < songModel.count; i++) {
+                                        if (songModel.get(i).id === songId) {
+                                            songModel.setProperty(i, "cover", coverPath)
+                                            radioConfig.updateSongCover(i, coverPath)
+                                            break
+                                        }
+                                    }
+                                    radioConfig.incrementCoverVersion()
+                                    radioConfig.saveConfig()
+                                    coverCropDialog.close()
+                                } else {
+                                    logger.logError("BIN转换失败: " + pythonRunner.getOutput())
+                                }
+                            } else {
+                                logger.logError("PNG裁剪失败")
+                            }
+                        } catch (e) {
+                            console.error("封面处理错误:", e)
+                            logger.logError("处理失败: " + e.toString())
+                        }
+                    }
+                }
+                
+                Button {
+                    text: "取消"
+                    font.pixelSize: 14
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        coverCropDialog.close()
+                    }
+                }
+            }
         }
     }
 
@@ -616,7 +940,11 @@ Rectangle {
 
                 Image {
                     anchors.fill: parent
-                    source: coverChangeDialog.coverPath ? "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath : ""
+                    source: {
+                        if (!coverChangeDialog.coverPath || !radioConfig) return ""
+                        var path = "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath
+                        return path + "?v=" + radioConfig.coverVersion
+                    }
                     fillMode: Image.PreserveAspectCrop
                     visible: coverChangeDialog.coverPath && status === Image.Ready
                 }
@@ -632,7 +960,11 @@ Rectangle {
                 Image {
                     id: coverImage2
                     anchors.fill: parent
-                    source: coverChangeDialog.coverPath ? "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath : ""
+                    source: {
+                        if (!coverChangeDialog.coverPath || !radioConfig) return ""
+                        var path = "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath
+                        return path + "?v=" + radioConfig.coverVersion
+                    }
                     fillMode: Image.PreserveAspectCrop
                     visible: false
                 }
@@ -684,22 +1016,17 @@ Rectangle {
 
     FileDialog {
         id: coverChangeFileDialog
-        title: "\u9009\u62E9\u5C01\u9762\u56FE\u7247"
-        nameFilters: ["\u56FE\u7247\u6587\u4EF6 (*.jpg *.jpeg *.png *.bmp *.bin)"]
+        title: "选择封面图片"
+        nameFilters: ["图片文件 (*.png)"]
         property int songIndex: -1
         onAccepted: {
             var srcPath = selectedFile.toString()
-            if (srcPath.startsWith("file:///")) {
-                srcPath = srcPath.substring(8)
-            }
-            var songs = radioConfig.getSongList()
-            var subDir = songs[songIndex].mp3.substring(0, songs[songIndex].mp3.indexOf("/"))
-            var storedCoverPath = radioConfig.importCover(srcPath, subDir)
-            if (storedCoverPath !== "") {
-                songModel.setProperty(songIndex, "cover", storedCoverPath)
-                radioConfig.updateSongCover(songIndex, storedCoverPath)
-                radioConfig.saveConfig()
-            }
+            // 获取歌曲ID
+            var songId = songModel.get(songIndex).id
+            // 打开裁剪对话框
+            coverCropDialog.sourceImagePath = srcPath
+            coverCropDialog.songId = songId
+            coverCropDialog.open()
         }
     }
 
