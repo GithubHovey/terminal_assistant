@@ -31,10 +31,12 @@ public:
     Q_INVOKABLE void updateRoleAgentId(int index, const QString &agentId);
     Q_INVOKABLE void updateRoleAgentUrl(int index, const QString &agentUrl);
     Q_INVOKABLE void updateRolePrompt(int index, const QString &prompt);
+    Q_INVOKABLE void updateRoleVoiceCloneId(int index, const QString &voiceCloneId);
 
     Q_INVOKABLE QString characterDir() const;
     Q_INVOKABLE QString roleDir(const QString &name) const;
     Q_INVOKABLE QString userDir() const;
+    Q_INVOKABLE QString userAvatarPath() const;
     Q_INVOKABLE bool ensureRoleDir(const QString &name);
     Q_INVOKABLE bool ensureUserDir();
 

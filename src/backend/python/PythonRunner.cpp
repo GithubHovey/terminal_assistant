@@ -87,6 +87,7 @@ bool PythonRunner::runScript(const QString &scriptName, const QStringList &argum
     }
 
     if (!m_lastOutput.isEmpty()) {
+        Logger::instance().logInfo("Script output [" + scriptName + "]: " + m_lastOutput);
         emit outputReady(m_lastOutput);
     }
 

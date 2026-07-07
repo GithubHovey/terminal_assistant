@@ -32,10 +32,13 @@ Write-Host "windeployqt OK" -ForegroundColor Green
 Write-Host "`n========== [4/4] Build python tools ==========" -ForegroundColor Cyan
 Push-Location scripts
 python -m PyInstaller --clean convert_image.spec
+if ($LASTEXITCODE -ne 0) { Pop-Location; Write-Host "PyInstaller convert_image failed!" -ForegroundColor Red; exit 1 }
+python -m PyInstaller --clean voice_clone.spec
 Pop-Location
-if ($LASTEXITCODE -ne 0) { Write-Host "PyInstaller failed!" -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "PyInstaller voice_clone failed!" -ForegroundColor Red; exit 1 }
 New-Item -ItemType Directory -Path "$DeployDir/python" -Force | Out-Null
 Copy-Item "scripts/dist/convert_image.exe" "$DeployDir/python/" -Force
+Copy-Item "scripts/dist/voice_clone.exe" "$DeployDir/python/" -Force
 Write-Host "python tools OK" -ForegroundColor Green
 
 $elapsed = ((Get-Date) - $startTime).TotalSeconds

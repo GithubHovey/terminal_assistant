@@ -75,3 +75,6 @@ target_link_libraries(DeepSpaceAssistant PRIVATE
 set_target_properties(DeepSpaceAssistant PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
+
+file(COPY scripts/dist/convert_image.exe scripts/dist/voice_clone.exe
+     DESTINATION ${CMAKE_BINARY_DIR}/python)

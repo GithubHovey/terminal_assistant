@@ -1367,11 +1367,16 @@ Rectangle {
                                 }
                                 
                                 Button {
+                                    id: voiceCloneButton
                                     text: "复刻"
                                     font.pixelSize: 12
+                                    enabled: true
                                     
                                     background: Rectangle {
-                                        color: parent.hovered ? "#FF7875" : "#FF4D4F"
+                                        color: {
+                                            if (!parent.enabled) return "#BFBFBF"
+                                            return parent.hovered ? "#FF7875" : "#FF4D4F"
+                                        }
                                         radius: 4
                                     }
                                     
@@ -1384,7 +1389,47 @@ Rectangle {
                                     }
                                     
                                     onClicked: {
-                                        console.log("开始声音复刻")
+                                        var englishName = currentEnglishName()
+                                        if (englishName === "") {
+                                            logger.logWarning("请先设置角色英文名")
+                                            return
+                                        }
+                                        
+                                        var name = currentRole ? currentRole.name : ""
+                                        var wavPath = characterManager.voiceMaterialPath(name)
+                                        if (wavPath === "") {
+                                            logger.logWarning("请先导入声音复刻素材")
+                                            return
+                                        }
+                                        
+                                        if (typeof pythonRunner === "undefined" || !pythonRunner) {
+                                            logger.logError("pythonRunner 未注册")
+                                            return
+                                        }
+                                        
+                                        voiceCloneButton.enabled = false
+                                        voiceCloneButton.text = "复刻中..."
+                                        
+                                        try {
+                                            var success = pythonRunner.runScript("voice_clone", [
+                                                "--wav", wavPath,
+                                                "--name", englishName
+                                            ])
+                                            
+                                            if (success) {
+                                                var voiceId = pythonRunner.getOutput()
+                                                characterManager.updateRoleVoiceCloneId(roleListView.currentIndex, voiceId)
+                                                logger.logInfo("声音复刻成功，voice_id: " + voiceId)
+                                            } else {
+                                                logger.logError("声音复刻失败: " + pythonRunner.getError())
+                                            }
+                                        } catch (e) {
+                                            console.error("声音复刻错误:", e)
+                                            logger.logError("声音复刻失败: " + e.toString())
+                                        } finally {
+                                            voiceCloneButton.enabled = true
+                                            voiceCloneButton.text = "复刻"
+                                        }
                                     }
                                 }
                             }
@@ -1548,7 +1593,7 @@ Rectangle {
                                     source: {
                                         if (!characterManager) return ""
                                         var name = currentRole ? currentRole.name : ""
-                                        if (name !== "") {
+                                        if (name !== "" && characterManager.chatBgExists(name)) {
                                             var roleDir = characterManager.roleDir(name)
                                             var path = roleDir + "/background.png"
                                             return "file:///" + path + "?v=" + characterManager.chatBgVersion

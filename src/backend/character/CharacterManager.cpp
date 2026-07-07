@@ -53,6 +53,15 @@ QString CharacterManager::userDir() const
     return characterDir() + "/user";
 }
 
+QString CharacterManager::userAvatarPath() const
+{
+    QString path = userDir() + "/user.png";
+    if (QFileInfo::exists(path)) {
+        return path;
+    }
+    return QString();
+}
+
 bool CharacterManager::ensureUserDir()
 {
     QString dir = userDir();
@@ -283,6 +292,16 @@ void CharacterManager::updateRolePrompt(int index, const QString &prompt)
     saveConfig();
 }
 
+void CharacterManager::updateRoleVoiceCloneId(int index, const QString &voiceCloneId)
+{
+    if (index < 0 || index >= m_roles.size()) {
+        return;
+    }
+    m_roles[index].setVoiceCloneId(voiceCloneId);
+    saveConfig();
+    Logger::instance().logInfo("Updated voiceCloneId for role " + m_roles[index].name() + ": " + voiceCloneId);
+}
+
 QString CharacterManager::importChatBg(const QString &srcFilePath, const QString &name)
 {
     if (srcFilePath.isEmpty() || name.isEmpty()) {
@@ -366,8 +385,14 @@ QString CharacterManager::importVoiceMaterial(const QString &srcFilePath, const 
         return QString();
     }
 
+    QString englishName = findEnglishNameByName(name);
+    if (englishName.isEmpty()) {
+        emit importError("请先设置角色英文名");
+        return QString();
+    }
+
     QString ext = fi.suffix().toLower();
-    QString dest = roleDir(name) + "/voice_clone." + ext;
+    QString dest = roleDir(name) + "/" + englishName + "." + ext;
     if (QFile::exists(dest)) {
         QFile::remove(dest);
     }
@@ -469,7 +494,11 @@ QString CharacterManager::voiceMaterialPath(const QString &name) const
     if (name.isEmpty()) {
         return QString();
     }
-    QString path = roleDir(name) + "/voice_clone.wav";
+    QString englishName = findEnglishNameByName(name);
+    if (englishName.isEmpty()) {
+        return QString();
+    }
+    QString path = roleDir(name) + "/" + englishName + ".wav";
     return QFile::exists(path) ? path : QString();
 }
 

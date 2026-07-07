@@ -389,7 +389,7 @@ Rectangle {
                     anchors.fill: parent
                     source: {
                         if (!characterManager) return ""
-                        var path = characterManager.userDir() + "/user.png"
+                        var path = characterManager.userAvatarPath()
                         if (path !== "") return "file:///" + path + "?v=" + characterManager.avatarVersion
                         return ""
                     }
