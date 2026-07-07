@@ -34,7 +34,9 @@ public:
 
     Q_INVOKABLE QString characterDir() const;
     Q_INVOKABLE QString roleDir(const QString &name) const;
+    Q_INVOKABLE QString userDir() const;
     Q_INVOKABLE bool ensureRoleDir(const QString &name);
+    Q_INVOKABLE bool ensureUserDir();
 
     Q_INVOKABLE QString importChatBg(const QString &srcFilePath, const QString &name);
     Q_INVOKABLE bool removeChatBg(const QString &name);

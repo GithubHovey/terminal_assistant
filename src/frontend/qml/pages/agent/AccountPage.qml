@@ -39,8 +39,7 @@ Rectangle {
                 }
                 
                 onClicked: {
-                    console.log("选择头像图片")
-                    avatarDialog.close()
+                    avatarFileDialog.open()
                 }
             }
             
@@ -70,6 +69,306 @@ Rectangle {
         }
     }
     
+    FileDialog {
+        id: avatarFileDialog
+        title: "选择头像图片"
+        nameFilters: ["PNG 图片 (*.png)"]
+        onAccepted: {
+            var filePath = selectedFile.toString()
+            console.log("FileDialog selected:", filePath)
+            avatarCropDialog.sourceImagePath = filePath
+            avatarCropDialog.open()
+        }
+    }
+    
+    Dialog {
+        id: avatarCropDialog
+        title: "调整头像"
+        modal: true
+        anchors.centerIn: parent
+        width: 320
+        height: 420
+        
+        property string sourceImagePath: ""
+        property real scaleValue: 1.0
+        property real offsetX: 0
+        property real offsetY: 0
+        
+        onOpened: {
+            console.log("avatarCropDialog opened with source:", sourceImagePath)
+            scaleValue = 1.0
+            offsetX = 0
+            offsetY = 0
+            console.log("Reset scale to 1.0, offset to (0, 0)")
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 15
+            
+            Item {
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 200
+                Layout.alignment: Qt.AlignHCenter
+                
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 100
+                    color: "#F0F0F0"
+                }
+                
+                Rectangle {
+                    id: clipMask
+                    anchors.fill: parent
+                    radius: 100
+                    clip: true
+                    color: "transparent"
+                    
+                    Image {
+                        id: cropImage
+                        width: parent.width
+                        height: parent.height
+                        source: avatarCropDialog.sourceImagePath
+                        fillMode: Image.PreserveAspectCrop
+                        scale: avatarCropDialog.scaleValue
+                        x: (parent.width - width) / 2 + avatarCropDialog.offsetX
+                        y: (parent.height - height) / 2 + avatarCropDialog.offsetY
+                        
+                        onStatusChanged: {
+                            if (status === Image.Ready) {
+                                console.log("Image loaded:", source, "size:", sourceSize)
+                            } else if (status === Image.Error) {
+                                console.log("Image load error:", source)
+                            }
+                        }
+                    }
+                }
+                
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 100
+                    color: "transparent"
+                    border.color: "#1890FF"
+                    border.width: 2
+                }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.OpenHandCursor
+                    property point lastPos
+                    property bool dragging: false
+                    
+                    onPressed: {
+                        console.log("MouseArea pressed at:", mouseX, mouseY)
+                        dragging = true
+                        lastPos = Qt.point(mouseX, mouseY)
+                        cursorShape = Qt.ClosedHandCursor
+                    }
+                    
+                    onPositionChanged: {
+                        if (dragging) {
+                            var dx = mouseX - lastPos.x
+                            var dy = mouseY - lastPos.y
+                            console.log("Dragging: dx=", dx, "dy=", dy, "old offset=", avatarCropDialog.offsetX, avatarCropDialog.offsetY)
+                            avatarCropDialog.offsetX += dx
+                            avatarCropDialog.offsetY += dy
+                            lastPos = Qt.point(mouseX, mouseY)
+                            console.log("New offset:", avatarCropDialog.offsetX, avatarCropDialog.offsetY)
+                        }
+                    }
+                    
+                    onReleased: {
+                        console.log("MouseArea released")
+                        dragging = false
+                        cursorShape = Qt.OpenHandCursor
+                    }
+                }
+            }
+            
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text {
+                    text: "缩放:"
+                    font.pixelSize: 12
+                    color: "#666666"
+                }
+                
+                Slider {
+                    id: scaleSlider
+                    Layout.fillWidth: true
+                    from: 0.5
+                    to: 3.0
+                    value: 1.0
+                    stepSize: 0.1
+                    
+                    onValueChanged: {
+                        avatarCropDialog.scaleValue = value
+                        console.log("Scale changed to:", value)
+                    }
+                }
+                
+                Text {
+                    text: scaleSlider.value.toFixed(1)
+                    font.pixelSize: 12
+                    color: "#666666"
+                    Layout.preferredWidth: 30
+                }
+            }
+            
+            Text {
+                text: "拖拽移动图片，滑块调整缩放"
+                font.pixelSize: 11
+                color: "#999999"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Item { Layout.fillWidth: true }
+                
+                Button {
+                    text: "确定"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        console.log("确定按钮被点击")
+                        
+                        try {
+                            if (avatarCropDialog.sourceImagePath === "") {
+                                logger.logWarning("未选择头像图片")
+                                return
+                            }
+                            
+                            var inputPath = avatarCropDialog.sourceImagePath
+                            console.log("原始路径:", inputPath)
+                            
+                            if (inputPath.startsWith("file:///")) {
+                                inputPath = inputPath.substring(8)
+                            } else if (inputPath.startsWith("file://")) {
+                                inputPath = inputPath.substring(7)
+                            }
+                            
+                            if (inputPath.length > 2 && inputPath.charAt(0) === "/" && inputPath.charAt(2) === ":") {
+                                inputPath = inputPath.substring(1)
+                            }
+                            
+                            console.log("转换后路径:", inputPath)
+                            
+                            if (!characterManager.ensureUserDir()) {
+                                logger.logError("无法创建用户头像目录")
+                                return
+                            }
+                            
+                            var userDir = characterManager.userDir()
+                            var pngPath = userDir + "/user.png"
+                            var binPath = userDir + "/user.bin"
+                            
+                            console.log("userDir:", userDir)
+                            console.log("pngPath:", pngPath)
+                            console.log("binPath:", binPath)
+                            console.log("offsetX:", avatarCropDialog.offsetX, "offsetY:", avatarCropDialog.offsetY)
+                            console.log("scaleValue:", avatarCropDialog.scaleValue)
+                            logger.logInfo("开始处理用户头像: " + pngPath)
+                            
+                            if (typeof imageProcessor === "undefined" || !imageProcessor) {
+                                logger.logError("imageProcessor 未注册")
+                                return
+                            }
+                            
+                            if (typeof imageProcessor.cropCircular !== "function") {
+                                logger.logError("cropCircular 函数不存在")
+                                return
+                            }
+                            
+                            var success = imageProcessor.cropCircular(
+                                inputPath,
+                                pngPath,
+                                60,
+                                avatarCropDialog.offsetX,
+                                avatarCropDialog.offsetY,
+                                avatarCropDialog.scaleValue,
+                                200
+                            )
+                            
+                            console.log("cropCircular 返回:", success)
+                            
+                            if (success) {
+                                logger.logInfo("PNG裁剪成功，开始转换为BIN...")
+                                
+                                if (typeof pythonRunner === "undefined" || !pythonRunner) {
+                                    logger.logError("pythonRunner 未注册")
+                                    return
+                                }
+                                
+                                var binSuccess = pythonRunner.runScript("convert_image", [
+                                    "--type", "avatar",
+                                    "--input", pngPath,
+                                    "--output", binPath
+                                ])
+                                
+                                console.log("runScript 返回:", binSuccess)
+                                
+                                if (binSuccess) {
+                                    logger.logInfo("用户头像处理完成: " + binPath)
+                                    characterManager.incrementAvatarVersion()
+                                    avatarCropDialog.close()
+                                } else {
+                                    logger.logError("BIN转换失败: " + pythonRunner.getOutput())
+                                }
+                            } else {
+                                logger.logError("PNG裁剪失败")
+                            }
+                        } catch (e) {
+                            console.error("头像处理错误:", e)
+                            logger.logError("处理失败: " + e.toString())
+                        }
+                    }
+                }
+                
+                Button {
+                    text: "取消"
+                    font.pixelSize: 14
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        avatarCropDialog.close()
+                    }
+                }
+            }
+        }
+    }
+    
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 30
@@ -84,6 +383,19 @@ Rectangle {
                 Layout.preferredHeight: 80
                 radius: 40
                 color: "#CCCCCC"
+                clip: true
+                
+                Image {
+                    anchors.fill: parent
+                    source: {
+                        if (!characterManager) return ""
+                        var path = characterManager.userDir() + "/user.png"
+                        if (path !== "") return "file:///" + path + "?v=" + characterManager.avatarVersion
+                        return ""
+                    }
+                    fillMode: Image.PreserveAspectCrop
+                    visible: source !== ""
+                }
                 
                 Text {
                     anchors.centerIn: parent
@@ -91,6 +403,7 @@ Rectangle {
                     font.pixelSize: 28
                     font.bold: true
                     color: "#FFFFFF"
+                    visible: parent.children[0].source === ""
                 }
                 
                 MouseArea {

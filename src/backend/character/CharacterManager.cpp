@@ -48,6 +48,21 @@ bool CharacterManager::ensureRoleDir(const QString &name)
     return true;
 }
 
+QString CharacterManager::userDir() const
+{
+    return characterDir() + "/user";
+}
+
+bool CharacterManager::ensureUserDir()
+{
+    QString dir = userDir();
+    if (!QDir().mkpath(dir)) {
+        Logger::instance().logError("Failed to create user directory: " + dir);
+        return false;
+    }
+    return true;
+}
+
 int CharacterManager::nextId() const
 {
     int maxId = 0;
