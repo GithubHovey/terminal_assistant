@@ -617,21 +617,324 @@ Rectangle {
         }
     }
     
+    Dialog {
+        id: chatBgCropDialog
+        title: "调整聊天背景"
+        modal: true
+        anchors.centerIn: parent
+        width: 400
+        height: 480
+        
+        property string sourceImagePath: ""
+        property real scaleValue: 1.0
+        property real offsetX: 0
+        property real offsetY: 0
+        
+        onOpened: {
+            console.log("chatBgCropDialog opened with source:", sourceImagePath)
+            scaleValue = 1.0
+            offsetX = 0
+            offsetY = 0
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 15
+            
+            // 280x171 预览区域（保持宽高比）
+            Item {
+                Layout.preferredWidth: 280
+                Layout.preferredHeight: 171
+                Layout.alignment: Qt.AlignHCenter
+                
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#F0F0F0"
+                    border.color: "#D9D9D9"
+                    border.width: 1
+                }
+                
+                Rectangle {
+                    id: chatBgClipMask
+                    anchors.fill: parent
+                    color: "transparent"
+                    clip: true
+                    
+                    Image {
+                        id: chatBgCropImage
+                        width: parent.width
+                        height: parent.height
+                        source: chatBgCropDialog.sourceImagePath
+                        fillMode: Image.PreserveAspectCrop
+                        scale: chatBgCropDialog.scaleValue
+                        x: (parent.width - width) / 2 + chatBgCropDialog.offsetX
+                        y: (parent.height - height) / 2 + chatBgCropDialog.offsetY
+                        
+                        onStatusChanged: {
+                            if (status === Image.Ready) {
+                                console.log("Chat background image loaded:", source, "size:", sourceSize)
+                            } else if (status === Image.Error) {
+                                console.log("Chat background image load error:", source)
+                            }
+                        }
+                    }
+                }
+                
+                // 边框（上层）
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "#1890FF"
+                    border.width: 2
+                }
+                
+                // 拖拽交互层（最上层）
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.OpenHandCursor
+                    property point lastPos
+                    property bool dragging: false
+                    
+                    onPressed: {
+                        console.log("ChatBg MouseArea pressed at:", mouseX, mouseY)
+                        dragging = true
+                        lastPos = Qt.point(mouseX, mouseY)
+                        cursorShape = Qt.ClosedHandCursor
+                    }
+                    
+                    onPositionChanged: {
+                        if (dragging) {
+                            var dx = mouseX - lastPos.x
+                            var dy = mouseY - lastPos.y
+                            console.log("Dragging: dx=", dx, "dy=", dy, "old offset=", chatBgCropDialog.offsetX, chatBgCropDialog.offsetY)
+                            chatBgCropDialog.offsetX += dx
+                            chatBgCropDialog.offsetY += dy
+                            lastPos = Qt.point(mouseX, mouseY)
+                            console.log("New offset:", chatBgCropDialog.offsetX, chatBgCropDialog.offsetY)
+                        }
+                    }
+                    
+                    onReleased: {
+                        console.log("ChatBg MouseArea released")
+                        dragging = false
+                        cursorShape = Qt.OpenHandCursor
+                    }
+                }
+            }
+            
+            // 缩放滑块
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text {
+                    text: "缩放:"
+                    font.pixelSize: 12
+                    color: "#666666"
+                }
+                
+                Slider {
+                    id: chatBgScaleSlider
+                    Layout.fillWidth: true
+                    from: 0.5
+                    to: 3.0
+                    value: 1.0
+                    stepSize: 0.1
+                    
+                    onValueChanged: {
+                        chatBgCropDialog.scaleValue = value
+                        console.log("Scale changed to:", value)
+                    }
+                }
+                
+                Text {
+                    text: chatBgScaleSlider.value.toFixed(1)
+                    font.pixelSize: 12
+                    color: "#666666"
+                    Layout.preferredWidth: 30
+                }
+            }
+            
+            // 提示文字
+            Text {
+                text: "拖拽移动图片，滑块调整缩放"
+                font.pixelSize: 11
+                color: "#999999"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            // 按钮
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Item { Layout.fillWidth: true }
+                
+                Button {
+                    text: "确定"
+                    font.pixelSize: 14
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        console.log("确定按钮被点击")
+                        
+                        try {
+                            var name = currentRole ? currentRole.name : ""
+                            
+                            if (name === "") {
+                                logger.logWarning("未选择角色")
+                                return
+                            }
+                            
+                            if (chatBgCropDialog.sourceImagePath === "") {
+                                logger.logWarning("未选择聊天背景图片")
+                                return
+                            }
+                            
+                            // 转换 URL 为本地路径
+                            var inputPath = chatBgCropDialog.sourceImagePath
+                            console.log("原始路径:", inputPath)
+                            
+                            // 移除 file:/// 前缀
+                            if (inputPath.startsWith("file:///")) {
+                                inputPath = inputPath.substring(8)
+                            } else if (inputPath.startsWith("file://")) {
+                                inputPath = inputPath.substring(7)
+                            }
+                            
+                            // Windows 路径处理：/D:/... -> D:/...
+                            if (inputPath.length > 2 && inputPath.charAt(0) === "/" && inputPath.charAt(2) === ":") {
+                                inputPath = inputPath.substring(1)
+                            }
+                            
+                            console.log("转换后路径:", inputPath)
+                            
+                            // 计算输出路径
+                            var roleDir = characterManager.roleDir(name)
+                            var pngPath = roleDir + "/background.png"
+                            var binPath = roleDir + "/background.bin"
+                            
+                            console.log("roleDir:", roleDir)
+                            console.log("pngPath:", pngPath)
+                            console.log("binPath:", binPath)
+                            console.log("offsetX:", chatBgCropDialog.offsetX, "offsetY:", chatBgCropDialog.offsetY)
+                            console.log("scaleValue:", chatBgCropDialog.scaleValue)
+                            logger.logInfo("开始处理聊天背景: " + pngPath)
+                            
+                            // 确保角色目录存在
+                            characterManager.ensureRoleDir(name)
+                            
+                            // 验证 imageProcessor 是否存在
+                            if (typeof imageProcessor === "undefined" || !imageProcessor) {
+                                logger.logError("imageProcessor 未注册")
+                                return
+                            }
+                            
+                            if (typeof imageProcessor.cropRectangular !== "function") {
+                                logger.logError("cropRectangular 函数不存在")
+                                return
+                            }
+                            
+                            // 调用 C++ 裁剪生成 PNG (280x171)
+                            var success = imageProcessor.cropRectangular(
+                                inputPath,
+                                pngPath,
+                                280,  // targetWidth
+                                171,  // targetHeight
+                                chatBgCropDialog.offsetX,
+                                chatBgCropDialog.offsetY,
+                                chatBgCropDialog.scaleValue,
+                                280,  // previewWidth
+                                171   // previewHeight
+                            )
+                            
+                            console.log("cropRectangular 返回:", success)
+                            
+                            if (success) {
+                                logger.logInfo("PNG裁剪成功，开始转换为BIN...")
+                                
+                                // 验证 pythonRunner 是否存在
+                                if (typeof pythonRunner === "undefined" || !pythonRunner) {
+                                    logger.logError("pythonRunner 未注册")
+                                    return
+                                }
+                                
+                                // 调用 Python 转换为 BIN
+                                var binSuccess = pythonRunner.runScript("convert_image", [
+                                    "--type", "chatbg",
+                                    "--input", pngPath,
+                                    "--output", binPath
+                                ])
+                                
+                                console.log("runScript 返回:", binSuccess)
+                                
+                                if (binSuccess) {
+                                    logger.logInfo("聊天背景处理完成: " + binPath)
+                                    characterManager.incrementChatBgVersion()
+                                    chatBgCropDialog.close()
+                                } else {
+                                    logger.logError("BIN转换失败: " + pythonRunner.getOutput())
+                                }
+                            } else {
+                                logger.logError("PNG裁剪失败")
+                            }
+                        } catch (e) {
+                            console.error("聊天背景处理错误:", e)
+                            logger.logError("处理失败: " + e.toString())
+                        }
+                    }
+                }
+                
+                Button {
+                    text: "取消"
+                    font.pixelSize: 14
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#E0E0E0" : "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font: parent.font
+                        color: "#333333"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        chatBgCropDialog.close()
+                    }
+                }
+            }
+        }
+    }
+    
     FileDialog {
         id: chatBgFileDialog
         title: "选择聊天背景图片"
         nameFilters: ["PNG 图片 (*.png)"]
         onAccepted: {
-            var name = currentRole ? currentRole.name : ""
-            if (name !== "" && characterManager) {
-                var filePath = selectedFile.toString()
-                var result = characterManager.importChatBg(filePath, name)
-                if (result !== "") {
-                    logger.logInfo("聊天背景导入成功: " + result)
-                }
-            } else {
-                logger.logWarning("请先选择角色")
-            }
+            var filePath = selectedFile.toString()
+            // 打开裁剪对话框而不是直接导入
+            chatBgCropDialog.sourceImagePath = filePath
+            chatBgCropDialog.open()
         }
     }
     
@@ -1247,7 +1550,7 @@ Rectangle {
                                         var name = currentRole ? currentRole.name : ""
                                         if (name !== "") {
                                             var path = characterManager.chatBgPath(name)
-                                            if (path !== "") return "file:///" + path
+                                            if (path !== "") return "file:///" + path + "?v=" + characterManager.chatBgVersion
                                         }
                                         return ""
                                     }

@@ -284,7 +284,7 @@ QString CharacterManager::importChatBg(const QString &srcFilePath, const QString
         return QString();
     }
 
-    QString dest = roleDir(name) + "/chatbg.png";
+    QString dest = roleDir(name) + "/background.png";
     if (QFile::exists(dest)) {
         QFile::remove(dest);
     }
@@ -407,7 +407,16 @@ QString CharacterManager::chatBgPath(const QString &name) const
     if (name.isEmpty()) {
         return QString();
     }
-    QString path = roleDir(name) + "/chatbg.png";
+    QString path = roleDir(name) + "/background.png";
+    return QFile::exists(path) ? path : QString();
+}
+
+QString CharacterManager::chatBgBinPath(const QString &name) const
+{
+    if (name.isEmpty()) {
+        return QString();
+    }
+    QString path = roleDir(name) + "/background.bin";
     return QFile::exists(path) ? path : QString();
 }
 
@@ -448,4 +457,15 @@ void CharacterManager::incrementAvatarVersion()
 {
     m_avatarVersion++;
     emit avatarVersionChanged();
+}
+
+int CharacterManager::chatBgVersion() const
+{
+    return m_chatBgVersion;
+}
+
+void CharacterManager::incrementChatBgVersion()
+{
+    m_chatBgVersion++;
+    emit chatBgVersionChanged();
 }

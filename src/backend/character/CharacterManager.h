@@ -13,6 +13,7 @@ class CharacterManager : public QObject
     Q_PROPERTY(QVariantList roleList READ getRoleList NOTIFY roleListChanged)
     Q_PROPERTY(int roleCount READ roleCount NOTIFY roleListChanged)
     Q_PROPERTY(int avatarVersion READ avatarVersion NOTIFY avatarVersionChanged)
+    Q_PROPERTY(int chatBgVersion READ chatBgVersion NOTIFY chatBgVersionChanged)
 
 public:
     explicit CharacterManager(QObject *parent = nullptr);
@@ -43,20 +44,25 @@ public:
     Q_INVOKABLE QString avatarPath(const QString &name) const;
     Q_INVOKABLE QString avatarBinPath(const QString &name) const;
     Q_INVOKABLE QString chatBgPath(const QString &name) const;
+    Q_INVOKABLE QString chatBgBinPath(const QString &name) const;
     Q_INVOKABLE QString voiceMaterialPath(const QString &name) const;
     Q_INVOKABLE QString previewAudioPath(const QString &name) const;
 
     Q_INVOKABLE int avatarVersion() const;
     Q_INVOKABLE void incrementAvatarVersion();
+    Q_INVOKABLE int chatBgVersion() const;
+    Q_INVOKABLE void incrementChatBgVersion();
 
 signals:
     void roleListChanged();
     void importError(const QString &error);
     void avatarVersionChanged();
+    void chatBgVersionChanged();
 
 private:
     QList<RoleInfo> m_roles;
     int m_avatarVersion = 0;
+    int m_chatBgVersion = 0;
     QString configFilePath() const;
     int nextId() const;
     QString findEnglishNameByName(const QString &name) const;
