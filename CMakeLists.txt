@@ -21,6 +21,7 @@ set(BACKEND_SOURCES
     src/backend/logger/Logger.cpp
     src/backend/user/RoleInfo.cpp
     src/backend/user/UserSettings.cpp
+    src/backend/user/UserAccount.cpp
 )
 
 set(BACKEND_HEADERS
@@ -35,6 +36,7 @@ set(BACKEND_HEADERS
     src/backend/logger/Logger.h
     src/backend/user/RoleInfo.h
     src/backend/user/UserSettings.h
+    src/backend/user/UserAccount.h
 )
 
 qt_add_executable(DeepSpaceAssistant

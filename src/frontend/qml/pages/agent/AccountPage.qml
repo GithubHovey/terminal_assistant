@@ -143,6 +143,48 @@ Rectangle {
                 Layout.fillWidth: true
                 placeholderText: "请输入API-KEY"
                 font.pixelSize: 14
+                text: userAccount.apiKey
+                visible: apiKeyEditBtn.checked
+            }
+            
+            Text {
+                Layout.fillWidth: true
+                font.pixelSize: 14
+                color: "#333333"
+                visible: !apiKeyEditBtn.checked
+                text: {
+                    var key = userAccount.apiKey
+                    if (!key || key.length <= 10) return key || ""
+                    return key.substring(0, 6) + "*".repeat(key.length - 10) + key.substring(key.length - 4)
+                }
+            }
+            
+            Button {
+                id: apiKeyEditBtn
+                text: checked ? "完成" : "编辑"
+                font.pixelSize: 14
+                checkable: true
+                checked: false
+                
+                background: Rectangle {
+                    color: parent.hovered ? "#40A9FF" : (parent.checked ? "#52C41A" : "#1890FF")
+                    radius: 4
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onCheckedChanged: {
+                    if (!checked) {
+                        userAccount.apiKey = apiKeyField.text
+                        userAccount.saveConfig()
+                    }
+                }
             }
         }
         

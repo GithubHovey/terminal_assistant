@@ -9,6 +9,7 @@
 #include "src/backend/character/CharacterManager.h"
 #include "src/backend/image/ImageProcessor.h"
 #include "src/backend/python/PythonRunner.h"
+#include "src/backend/user/UserAccount.h"
 
 using namespace Qt::StringLiterals;
 
@@ -39,6 +40,10 @@ int main(int argc, char *argv[])
     
     PythonRunner pythonRunner;
     engine.rootContext()->setContextProperty("pythonRunner", &pythonRunner);
+    
+    UserAccount userAccount;
+    userAccount.loadConfig();
+    engine.rootContext()->setContextProperty("userAccount", &userAccount);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     
