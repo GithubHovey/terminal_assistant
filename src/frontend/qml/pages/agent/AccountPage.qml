@@ -456,7 +456,7 @@ Rectangle {
                 Layout.fillWidth: true
                 placeholderText: "请输入API-KEY"
                 font.pixelSize: 14
-                text: userAccount.apiKey
+                text: userAccount && userAccount.apiKey ? userAccount.apiKey : ""
                 visible: apiKeyEditBtn.checked
             }
             
@@ -466,7 +466,7 @@ Rectangle {
                 color: "#333333"
                 visible: !apiKeyEditBtn.checked
                 text: {
-                    var key = userAccount.apiKey
+                    var key = userAccount && userAccount.apiKey ? userAccount.apiKey : ""
                     if (!key || key.length <= 10) return key || ""
                     return key.substring(0, 6) + "*".repeat(key.length - 10) + key.substring(key.length - 4)
                 }
@@ -493,7 +493,7 @@ Rectangle {
                 }
                 
                 onCheckedChanged: {
-                    if (!checked) {
+                    if (!checked && userAccount) {
                         userAccount.apiKey = apiKeyField.text
                         userAccount.saveConfig()
                     }
