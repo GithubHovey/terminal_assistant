@@ -1549,8 +1549,9 @@ Rectangle {
                                         if (!characterManager) return ""
                                         var name = currentRole ? currentRole.name : ""
                                         if (name !== "") {
-                                            var path = characterManager.chatBgPath(name)
-                                            if (path !== "") return "file:///" + path + "?v=" + characterManager.chatBgVersion
+                                            var roleDir = characterManager.roleDir(name)
+                                            var path = roleDir + "/background.png"
+                                            return "file:///" + path + "?v=" + characterManager.chatBgVersion
                                         }
                                         return ""
                                     }
@@ -1567,8 +1568,7 @@ Rectangle {
                                         if (!characterManager) return true
                                         var name = currentRole ? currentRole.name : ""
                                         if (name === "") return true
-                                        var path = characterManager.chatBgPath(name)
-                                        return path === ""
+                                        return !characterManager.chatBgExists(name)
                                     }
                                 }
                             }

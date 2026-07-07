@@ -45,6 +45,7 @@ public:
     Q_INVOKABLE QString avatarBinPath(const QString &name) const;
     Q_INVOKABLE QString chatBgPath(const QString &name) const;
     Q_INVOKABLE QString chatBgBinPath(const QString &name) const;
+    Q_INVOKABLE bool chatBgExists(const QString &name) const;
     Q_INVOKABLE QString voiceMaterialPath(const QString &name) const;
     Q_INVOKABLE QString previewAudioPath(const QString &name) const;
 

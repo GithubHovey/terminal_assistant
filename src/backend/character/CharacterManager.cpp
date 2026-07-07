@@ -304,15 +304,35 @@ bool CharacterManager::removeChatBg(const QString &name)
         return false;
     }
 
-    QString path = chatBgPath(name);
-    if (QFile::exists(path)) {
-        if (!QFile::remove(path)) {
-            emit importError("Failed to remove chat background: " + path);
-            return false;
+    bool success = true;
+    
+    // Remove PNG file
+    QString pngPath = chatBgPath(name);
+    if (QFile::exists(pngPath)) {
+        if (!QFile::remove(pngPath)) {
+            emit importError("Failed to remove chat background PNG: " + pngPath);
+            success = false;
+        } else {
+            Logger::instance().logInfo("Removed chat background PNG for " + name);
         }
-        Logger::instance().logInfo("Removed chat background for " + name);
     }
-    return true;
+    
+    // Remove BIN file
+    QString binPath = chatBgBinPath(name);
+    if (QFile::exists(binPath)) {
+        if (!QFile::remove(binPath)) {
+            emit importError("Failed to remove chat background BIN: " + binPath);
+            success = false;
+        } else {
+            Logger::instance().logInfo("Removed chat background BIN for " + name);
+        }
+    }
+    
+    if (success) {
+        incrementChatBgVersion();
+    }
+    
+    return success;
 }
 
 QString CharacterManager::importVoiceMaterial(const QString &srcFilePath, const QString &name)
@@ -418,6 +438,15 @@ QString CharacterManager::chatBgBinPath(const QString &name) const
     }
     QString path = roleDir(name) + "/background.bin";
     return QFile::exists(path) ? path : QString();
+}
+
+bool CharacterManager::chatBgExists(const QString &name) const
+{
+    if (name.isEmpty()) {
+        return false;
+    }
+    QString path = roleDir(name) + "/background.png";
+    return QFile::exists(path);
 }
 
 QString CharacterManager::voiceMaterialPath(const QString &name) const
