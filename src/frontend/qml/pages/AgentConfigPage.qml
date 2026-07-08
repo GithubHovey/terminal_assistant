@@ -8,6 +8,13 @@ Rectangle {
     color: "#F5F5F5"
     
     property int currentIndex: 0
+    property bool hasApiKey: userAccount && userAccount.apiKey.length > 0
+    
+    readonly property var lockedIndices: [1, 2, 3, 4]
+    
+    function isLocked(idx) {
+        return lockedIndices.indexOf(idx) !== -1 && !hasApiKey
+    }
     
     RowLayout {
         anchors.fill: parent
@@ -36,8 +43,12 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 40
-                        color: root.currentIndex === index ? "#1890FF" : (mouseArea.containsMouse ? "#E6F7FF" : "transparent")
+                        color: {
+                            if (root.isLocked(index)) return "#F0F0F0"
+                            return root.currentIndex === index ? "#1890FF" : (mouseArea.containsMouse ? "#E6F7FF" : "transparent")
+                        }
                         radius: 4
+                        opacity: root.isLocked(index) ? 0.5 : 1.0
                         
                         RowLayout {
                             anchors.fill: parent
@@ -47,14 +58,20 @@ Rectangle {
                             Text {
                                 text: modelData.icon
                                 font.pixelSize: 16
-                                color: root.currentIndex === index ? "#FFFFFF" : "#333333"
+                                color: root.currentIndex === index && !root.isLocked(index) ? "#FFFFFF" : "#333333"
                             }
                             
                             Text {
                                 text: modelData.name
                                 font.pixelSize: 14
-                                color: root.currentIndex === index ? "#FFFFFF" : "#333333"
+                                color: root.currentIndex === index && !root.isLocked(index) ? "#FFFFFF" : "#333333"
                                 Layout.fillWidth: true
+                            }
+                            
+                            Text {
+                                visible: root.isLocked(index)
+                                text: "🔒"
+                                font.pixelSize: 12
                             }
                         }
                         
@@ -62,7 +79,9 @@ Rectangle {
                             id: mouseArea
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: root.isLocked(index) ? Qt.ForbiddenCursor : Qt.PointingHandCursor
                             onClicked: {
+                                if (root.isLocked(index)) return
                                 root.currentIndex = index
                             }
                         }
@@ -90,6 +109,31 @@ Rectangle {
                 RolePage {}
                 VoiceLibraryPage {}
                 OtherPage {}
+            }
+            
+            Rectangle {
+                visible: root.isLocked(root.currentIndex)
+                anchors.fill: parent
+                color: "#F5F5F5"
+                z: 10
+                
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 12
+                    
+                    Text {
+                        text: "🔒"
+                        font.pixelSize: 48
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                    
+                    Text {
+                        text: "请先在「账号」页面配置 API Key"
+                        font.pixelSize: 16
+                        color: "#999999"
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
             }
         }
     }
