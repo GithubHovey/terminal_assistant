@@ -48,7 +48,7 @@ bool PythonRunner::runScript(const QString &scriptName, const QStringList &argum
 
     QProcess process;
     process.setWorkingDirectory(m_workingDir);
-    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.setProcessChannelMode(QProcess::SeparateChannels);
 
     setRunning(true);
     m_lastOutput.clear();
@@ -75,15 +75,17 @@ bool PythonRunner::runScript(const QString &scriptName, const QStringList &argum
     }
 
     m_lastOutput = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    QString stdError = QString::fromUtf8(process.readAllStandardError()).trimmed();
     int exitCode = process.exitCode();
 
     if (exitCode != 0) {
-        QString errOutput = QString::fromUtf8(process.readAllStandardError()).trimmed();
-        m_lastError = errOutput.isEmpty()
-            ? QString("Script exited with code %1").arg(exitCode)
-            : errOutput;
+        m_lastError = stdError.isEmpty() ? m_lastOutput : stdError;
         Logger::instance().logError("Script error [" + scriptName + "]: " + m_lastError);
         emit scriptError(m_lastError);
+    }
+
+    if (!stdError.isEmpty()) {
+        Logger::instance().logInfo("Script stderr [" + scriptName + "]: " + stdError);
     }
 
     if (!m_lastOutput.isEmpty()) {

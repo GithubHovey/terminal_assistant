@@ -938,24 +938,6 @@ Rectangle {
         }
     }
     
-    FileDialog {
-        id: voiceMaterialFileDialog
-        title: "选择声音复刻素材"
-        nameFilters: ["音频文件 (*.wav *.mp3 *.flac)"]
-        onAccepted: {
-            var name = currentRole ? currentRole.name : ""
-            if (name !== "" && characterManager) {
-                var filePath = selectedFile.toString()
-                var result = characterManager.importVoiceMaterial(filePath, name)
-                if (result !== "") {
-                    logger.logInfo("声音素材导入成功: " + result)
-                }
-            } else {
-                logger.logWarning("请先设置角色英文名")
-            }
-        }
-    }
-    
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -1289,189 +1271,117 @@ Rectangle {
                             }
                         }
                         
-                        Text {
-                            text: "声音复刻"
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: "#333333"
-                        }
-                        
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 10
                             
                             Text {
-                                text: "模型选择:"
+                                text: "声音选择:"
                                 font.pixelSize: 14
                                 color: "#333333"
+                                Layout.preferredWidth: 80
                             }
                             
-                            Text {
-                                text: "cosyvoice-v3.5-plus"
-                                font.pixelSize: 14
-                                font.bold: true
-                                color: "#1890FF"
-                            }
-                        }
-                        
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 10
-                            
-                            RowLayout {
+                            ComboBox {
+                                id: voiceComboBox
                                 Layout.fillWidth: true
-                                spacing: 10
+                                Layout.preferredHeight: 36
+                                model: voiceLibrary ? voiceLibrary.voiceList : []
                                 
-                                Text {
-                                    text: "素材文件:"
+                                textRole: ""
+                                
+                                delegate: ItemDelegate {
+                                    width: voiceComboBox.width
+                                    height: 40
+                                    contentItem: Text {
+                                        text: modelData.name
+                                        font.pixelSize: 14
+                                        color: "#333333"
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: 10
+                                        elide: Text.ElideRight
+                                    }
+                                    highlighted: voiceComboBox.highlightedIndex === index
+                                }
+                                
+                                contentItem: Text {
+                                    leftPadding: 10
+                                    rightPadding: 30
+                                    text: voiceComboBox.voiceDisplayText
                                     font.pixelSize: 14
                                     color: "#333333"
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
                                 }
                                 
-                                TextField {
-                                    id: voiceMaterialEdit
-                                    Layout.fillWidth: true
-                                    placeholderText: "选择声音复刻素材文件"
-                                    font.pixelSize: 14
-                                    readOnly: true
-                                    text: {
-                                        if (!characterManager) return ""
-                                        var name = currentRole ? currentRole.name : ""
-                                        if (name !== "") {
-                                            return characterManager.voiceMaterialPath(name)
-                                        }
-                                        return ""
-                                    }
-                                }
-                                
-                                Button {
-                                    text: "选择文件"
-                                    font.pixelSize: 12
-                                    
-                                    background: Rectangle {
-                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                        radius: 4
-                                    }
-                                    
-                                    contentItem: Text {
-                                        text: parent.text
-                                        font: parent.font
-                                        color: "#FFFFFF"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    
-                                    onClicked: {
-                                        voiceMaterialFileDialog.open()
+                                indicator: Canvas {
+                                    x: voiceComboBox.width - width - voiceComboBox.rightPadding
+                                    y: (voiceComboBox.availableHeight - height) / 2
+                                    width: 12
+                                    height: 8
+                                    contextType: "2d"
+                                    onPaint: {
+                                        context.reset()
+                                        context.moveTo(0, 0)
+                                        context.lineTo(width, 0)
+                                        context.lineTo(width / 2, height)
+                                        context.closePath()
+                                        context.fillStyle = "#666666"
+                                        context.fill()
                                     }
                                 }
                                 
-                                Button {
-                                    id: voiceCloneButton
-                                    text: "复刻"
-                                    font.pixelSize: 12
-                                    enabled: true
-                                    
-                                    background: Rectangle {
-                                        color: {
-                                            if (!parent.enabled) return "#BFBFBF"
-                                            return parent.hovered ? "#FF7875" : "#FF4D4F"
-                                        }
-                                        radius: 4
+                                background: Rectangle {
+                                    color: "#FFFFFF"
+                                    border.color: "#D9D9D9"
+                                    border.width: 1
+                                    radius: 4
+                                }
+                                
+                                Component.onCompleted: {
+                                    updateSelection()
+                                }
+                                
+                                onCurrentIndexChanged: {
+                                    if (roleListView.currentIndex >= 0 && currentIndex >= 0) {
+                                        var voice = voiceLibrary.voiceList[currentIndex]
+                                        characterManager.updateRoleVoiceCloneId(roleListView.currentIndex, voice.voiceId)
+                                        voiceDisplayText = voice.name
                                     }
-                                    
-                                    contentItem: Text {
-                                        text: parent.text
-                                        font: parent.font
-                                        color: "#FFFFFF"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                Connections {
+                                    target: roleListView
+                                    function onCurrentIndexChanged() {
+                                        voiceComboBox.updateSelection()
                                     }
-                                    
-                                    onClicked: {
-                                        var englishName = currentEnglishName()
-                                        if (englishName === "") {
-                                            logger.logWarning("请先设置角色英文名")
+                                }
+                                
+                                function updateSelection() {
+                                    if (!currentRole || !voiceLibrary) {
+                                        currentIndex = -1
+                                        voiceDisplayText = ""
+                                        return
+                                    }
+                                    var currentVoiceId = currentRole.voiceCloneId
+                                    if (currentVoiceId === "") {
+                                        currentIndex = -1
+                                        voiceDisplayText = ""
+                                        return
+                                    }
+                                    var voices = voiceLibrary.voiceList
+                                    for (var i = 0; i < voices.length; i++) {
+                                        if (voices[i].voiceId === currentVoiceId) {
+                                            currentIndex = i
+                                            voiceDisplayText = voices[i].name
                                             return
                                         }
-                                        
-                                        var name = currentRole ? currentRole.name : ""
-                                        var wavPath = characterManager.voiceMaterialPath(name)
-                                        if (wavPath === "") {
-                                            logger.logWarning("请先导入声音复刻素材")
-                                            return
-                                        }
-                                        
-                                        if (typeof pythonRunner === "undefined" || !pythonRunner) {
-                                            logger.logError("pythonRunner 未注册")
-                                            return
-                                        }
-                                        
-                                        voiceCloneButton.enabled = false
-                                        voiceCloneButton.text = "复刻中..."
-                                        
-                                        try {
-                                            var success = pythonRunner.runScript("voice_clone", [
-                                                "--wav", wavPath,
-                                                "--name", englishName
-                                            ])
-                                            
-                                            if (success) {
-                                                var voiceId = pythonRunner.getOutput()
-                                                characterManager.updateRoleVoiceCloneId(roleListView.currentIndex, voiceId)
-                                                logger.logInfo("声音复刻成功，voice_id: " + voiceId)
-                                            } else {
-                                                logger.logError("声音复刻失败: " + pythonRunner.getError())
-                                            }
-                                        } catch (e) {
-                                            console.error("声音复刻错误:", e)
-                                            logger.logError("声音复刻失败: " + e.toString())
-                                        } finally {
-                                            voiceCloneButton.enabled = true
-                                            voiceCloneButton.text = "复刻"
-                                        }
                                     }
-                                }
-                            }
-                            
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
-                                
-                                Text {
-                                    text: "试听文本:"
-                                    font.pixelSize: 14
-                                    color: "#333333"
+                                    currentIndex = -1
+                                    voiceDisplayText = ""
                                 }
                                 
-                                TextField {
-                                    id: testTextEdit
-                                    Layout.fillWidth: true
-                                    placeholderText: "输入试听文本"
-                                    font.pixelSize: 14
-                                }
-                                
-                                Button {
-                                    text: "合成试听"
-                                    font.pixelSize: 12
-                                    
-                                    background: Rectangle {
-                                        color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                        radius: 4
-                                    }
-                                    
-                                    contentItem: Text {
-                                        text: parent.text
-                                        font: parent.font
-                                        color: "#FFFFFF"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    
-                                    onClicked: {
-                                        console.log("合成试听")
-                                    }
-                                }
+                                property string voiceDisplayText: ""
                             }
                         }
                         

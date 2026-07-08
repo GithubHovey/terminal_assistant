@@ -29,6 +29,7 @@ Rectangle {
                         { name: "热词库", icon: "📝" },
                         { name: "知识库", icon: "📚" },
                         { name: "角色", icon: "🎭" },
+                        { name: "声音库", icon: "🎤" },
                         { name: "其他", icon: "⚙️" }
                     ]
                     
@@ -87,6 +88,7 @@ Rectangle {
                 HotWordsPage {}
                 KnowledgeBasePage {}
                 RolePage {}
+                VoiceLibraryPage {}
                 OtherPage {}
             }
         }

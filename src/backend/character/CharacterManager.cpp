@@ -385,14 +385,8 @@ QString CharacterManager::importVoiceMaterial(const QString &srcFilePath, const 
         return QString();
     }
 
-    QString englishName = findEnglishNameByName(name);
-    if (englishName.isEmpty()) {
-        emit importError("请先设置角色英文名");
-        return QString();
-    }
-
     QString ext = fi.suffix().toLower();
-    QString dest = roleDir(name) + "/" + englishName + "." + ext;
+    QString dest = roleDir(name) + "/voice_demo." + ext;
     if (QFile::exists(dest)) {
         QFile::remove(dest);
     }
@@ -494,11 +488,7 @@ QString CharacterManager::voiceMaterialPath(const QString &name) const
     if (name.isEmpty()) {
         return QString();
     }
-    QString englishName = findEnglishNameByName(name);
-    if (englishName.isEmpty()) {
-        return QString();
-    }
-    QString path = roleDir(name) + "/" + englishName + ".wav";
+    QString path = roleDir(name) + "/voice_demo.wav";
     return QFile::exists(path) ? path : QString();
 }
 

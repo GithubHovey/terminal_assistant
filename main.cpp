@@ -10,6 +10,7 @@
 #include "src/backend/image/ImageProcessor.h"
 #include "src/backend/python/PythonRunner.h"
 #include "src/backend/user/UserAccount.h"
+#include "src/backend/voice/VoiceLibrary.h"
 
 using namespace Qt::StringLiterals;
 
@@ -44,6 +45,10 @@ int main(int argc, char *argv[])
     UserAccount userAccount;
     userAccount.loadConfig();
     engine.rootContext()->setContextProperty("userAccount", &userAccount);
+    
+    VoiceLibrary voiceLibrary;
+    voiceLibrary.loadConfig();
+    engine.rootContext()->setContextProperty("voiceLibrary", &voiceLibrary);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     

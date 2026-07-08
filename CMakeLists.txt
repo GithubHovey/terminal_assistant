@@ -22,6 +22,7 @@ set(BACKEND_SOURCES
     src/backend/user/RoleInfo.cpp
     src/backend/user/UserSettings.cpp
     src/backend/user/UserAccount.cpp
+    src/backend/voice/VoiceLibrary.cpp
 )
 
 set(BACKEND_HEADERS
@@ -37,6 +38,7 @@ set(BACKEND_HEADERS
     src/backend/user/RoleInfo.h
     src/backend/user/UserSettings.h
     src/backend/user/UserAccount.h
+    src/backend/voice/VoiceLibrary.h
 )
 
 qt_add_executable(DeepSpaceAssistant
@@ -61,6 +63,7 @@ qt_add_qml_module(DeepSpaceAssistant
         src/frontend/qml/pages/agent/HotWordsPage.qml
         src/frontend/qml/pages/agent/KnowledgeBasePage.qml
         src/frontend/qml/pages/agent/RolePage.qml
+        src/frontend/qml/pages/agent/VoiceLibraryPage.qml
         src/frontend/qml/pages/agent/OtherPage.qml
     RESOURCES
         src/frontend/fonts/SourceHanSansCN-Medium-2.otf
@@ -78,3 +81,6 @@ set_target_properties(DeepSpaceAssistant PROPERTIES
 
 file(COPY scripts/dist/convert_image.exe scripts/dist/voice_clone.exe
      DESTINATION ${CMAKE_BINARY_DIR}/python)
+
+file(COPY materials/option.json
+     DESTINATION ${CMAKE_BINARY_DIR}/materials)
