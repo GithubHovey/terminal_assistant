@@ -20,6 +20,14 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: sdCardManager
+        function onApplyFinished(success, message) {
+            dialogMsg.text = message
+            dialogOverlay.visible = true
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -265,8 +273,74 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     text: qsTr("应用到终端SD卡")
                     onClicked: {
-                        logger.logInfo("应用按钮被点击")
+                        if (!sdCardManager.connected) {
+                            logger.logWarning("请先连接SD卡")
+                            dialogMsg.text = "请先连接SD卡"
+                            dialogOverlay.visible = true
+                            return
+                        }
+                        logger.logInfo("开始应用资源到SD卡...")
+                        sdCardManager.applyResources()
                     }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: dialogOverlay
+        visible: false
+        anchors.fill: parent
+        color: "#80000000"
+        z: 999
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {}
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: 300
+            height: 120
+            radius: 8
+            color: "#FFFFFF"
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                Text {
+                    id: dialogMsg
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    font.pixelSize: 14
+                    color: "#333333"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.Wrap
+                }
+
+                Button {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 80
+                    Layout.preferredHeight: 32
+                    text: "确定"
+
+                    background: Rectangle {
+                        color: parent.pressed ? "#096DD9" : (parent.hovered ? "#40A9FF" : "#1890FF")
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: dialogOverlay.visible = false
                 }
             }
         }

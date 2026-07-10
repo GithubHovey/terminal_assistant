@@ -1,6 +1,10 @@
 #include "SDCardManager.h"
 #include "src/backend/logger/Logger.h"
 #include <QStorageInfo>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QtConcurrent>
 #include <vector>
 #include <windows.h>
 
@@ -8,6 +12,7 @@ SDCardManager::SDCardManager(QObject *parent)
     : QObject(parent)
     , m_connTimer(new QTimer(this))
     , m_arrivalDebounceTimer(new QTimer(this))
+    , m_applyWatcher(new QFutureWatcher<bool>(this))
     , m_connected(false)
     , m_cardSize(0)
     , m_freeSpace(0)
@@ -243,4 +248,91 @@ void SDCardManager::startConnectionMonitor()
 void SDCardManager::stopConnectionMonitor()
 {
     m_connTimer->stop();
+}
+
+void SDCardManager::applyResources()
+{
+    if (!m_connected) {
+        emit applyFinished(false, "SD卡未连接");
+        return;
+    }
+
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString sdRoot = m_driveLetter + "/";
+    QString musicSrc = appDir + "/music";
+    QString musicDst = sdRoot + "music";
+    QString charSrc = appDir + "/character";
+    QString charDst = sdRoot + "character";
+
+    if (!QDir(musicSrc).exists()) {
+        emit applyFinished(false, "music目录不存在");
+        return;
+    }
+    if (!QDir(charSrc).exists()) {
+        emit applyFinished(false, "character目录不存在");
+        return;
+    }
+
+    Logger::instance().logInfo("开始复制资源到SD卡...");
+
+    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst]() -> bool {
+        QDir sdRootDir(musicDst);
+        if (sdRootDir.exists()) {
+            sdRootDir.removeRecursively();
+        }
+        QDir charDstDir(charDst);
+        if (charDstDir.exists()) {
+            charDstDir.removeRecursively();
+        }
+
+        if (!copyDirectoryRecursive(musicSrc, musicDst)) {
+            return false;
+        }
+        if (!copyDirectoryRecursive(charSrc, charDst)) {
+            return false;
+        }
+        return true;
+    });
+
+    m_applyWatcher->setFuture(future);
+
+    connect(m_applyWatcher, &QFutureWatcher<bool>::finished, this, [this]() {
+        bool success = m_applyWatcher->result();
+        if (success) {
+            Logger::instance().logInfo("资源已成功复制到SD卡");
+            emit applyFinished(true, "资源已成功复制到SD卡");
+        } else {
+            Logger::instance().logError("复制资源到SD卡失败");
+            emit applyFinished(false, "复制资源到SD卡失败");
+        }
+    });
+}
+
+bool SDCardManager::copyDirectoryRecursive(const QString &srcPath, const QString &dstPath)
+{
+    QDir srcDir(srcPath);
+    if (!srcDir.exists()) {
+        return false;
+    }
+
+    QDir dstDir;
+    if (!dstDir.mkpath(dstPath)) {
+        return false;
+    }
+
+    const QFileInfoList entries = srcDir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+    for (const QFileInfo &info : entries) {
+        if (info.isDir()) {
+            if (!copyDirectoryRecursive(info.absoluteFilePath(), dstPath + "/" + info.fileName())) {
+                return false;
+            }
+        } else {
+            QString dstFile = dstPath + "/" + info.fileName();
+            QFile::remove(dstFile);
+            if (!QFile::copy(info.absoluteFilePath(), dstFile)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }

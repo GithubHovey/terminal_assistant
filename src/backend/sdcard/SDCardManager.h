@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVariantList>
 #include <QTimer>
+#include <QFutureWatcher>
 
 class SDCardManager : public QObject
 {
@@ -29,6 +30,7 @@ public:
     Q_INVOKABLE bool connectCard(const QString &driveLetter);
     Q_INVOKABLE void disconnectCard();
     Q_INVOKABLE QString formatSize(qint64 bytes) const;
+    Q_INVOKABLE void applyResources();
 
 public slots:
     void onDeviceArrived(const QString &driveLetter);
@@ -38,6 +40,7 @@ signals:
     void connectedChanged();
     void driveListChanged();
     void errorOccurred(const QString &error);
+    void applyFinished(bool success, const QString &message);
 
 private slots:
     void checkConnection();
@@ -47,9 +50,11 @@ private:
     void stopConnectionMonitor();
     QVariantList scanRemovableDrives();
     static QString formatSizeStatic(qint64 bytes);
+    static bool copyDirectoryRecursive(const QString &srcPath, const QString &dstPath);
 
     QTimer *m_connTimer;
     QTimer *m_arrivalDebounceTimer;
+    QFutureWatcher<bool> *m_applyWatcher;
     bool m_connected;
     QString m_driveLetter;
     qint64 m_cardSize;
