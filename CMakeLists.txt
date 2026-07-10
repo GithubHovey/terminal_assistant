@@ -7,10 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Multimedia)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent)
 
 set(BACKEND_SOURCES
     src/backend/sdcard/SDCardManager.cpp
+    src/backend/sdcard/DeviceEventFilter.cpp
     src/backend/basic/BasicConfig.cpp
     src/backend/agent/AgentConfig.cpp
     src/backend/radio/RadioConfig.cpp
@@ -27,6 +28,7 @@ set(BACKEND_SOURCES
 
 set(BACKEND_HEADERS
     src/backend/sdcard/SDCardManager.h
+    src/backend/sdcard/DeviceEventFilter.h
     src/backend/basic/BasicConfig.h
     src/backend/agent/AgentConfig.h
     src/backend/radio/RadioConfig.h
@@ -73,6 +75,7 @@ target_link_libraries(DeepSpaceAssistant PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Multimedia
+    Qt6::Concurrent
 )
 
 set_target_properties(DeepSpaceAssistant PROPERTIES

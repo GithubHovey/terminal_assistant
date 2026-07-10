@@ -3,29 +3,58 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantList>
+#include <QTimer>
 
 class SDCardManager : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
+    Q_PROPERTY(QString driveLetter READ driveLetter NOTIFY connectedChanged)
+    Q_PROPERTY(qint64 cardSize READ cardSize NOTIFY connectedChanged)
+    Q_PROPERTY(qint64 freeSpace READ freeSpace NOTIFY connectedChanged)
+    Q_PROPERTY(QVariantList availableDrives READ availableDrives NOTIFY driveListChanged)
 
 public:
     explicit SDCardManager(QObject *parent = nullptr);
     ~SDCardManager() override;
 
-    Q_INVOKABLE bool findSDCard();
-    Q_INVOKABLE bool readSDCard();
-    Q_INVOKABLE qint64 getCardSize() const;
-    Q_INVOKABLE qint64 getFreeSpace() const;
-    Q_INVOKABLE bool isFAT32() const;
+    bool isConnected() const;
+    QString driveLetter() const;
+    qint64 cardSize() const;
+    qint64 freeSpace() const;
+    QVariantList availableDrives() const;
+
+    Q_INVOKABLE void refreshDrives();
+    Q_INVOKABLE bool connectCard(const QString &driveLetter);
+    Q_INVOKABLE void disconnectCard();
+    Q_INVOKABLE QString formatSize(qint64 bytes) const;
+
+public slots:
+    void onDeviceArrived(const QString &driveLetter);
+    void onDeviceRemoved(const QString &driveLetter);
 
 signals:
-    void cardFound(const QString &driveLetter);
-    void cardReadError(const QString &error);
+    void connectedChanged();
+    void driveListChanged();
+    void errorOccurred(const QString &error);
+
+private slots:
+    void checkConnection();
 
 private:
+    void startConnectionMonitor();
+    void stopConnectionMonitor();
+    QVariantList scanRemovableDrives();
+    static QString formatSizeStatic(qint64 bytes);
+
+    QTimer *m_connTimer;
+    QTimer *m_arrivalDebounceTimer;
+    bool m_connected;
     QString m_driveLetter;
     qint64 m_cardSize;
     qint64 m_freeSpace;
+    QVariantList m_availableDrives;
 };
 
 #endif // SDCARDMANAGER_H

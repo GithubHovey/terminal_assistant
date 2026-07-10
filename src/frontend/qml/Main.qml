@@ -141,13 +141,117 @@ ApplicationWindow {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
+            Layout.preferredHeight: 44
             color: "#FFFFFF"
 
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 10
-                spacing: 10
+                spacing: 8
+
+                RowLayout {
+                    Layout.preferredWidth: 400
+                    Layout.fillHeight: true
+                    spacing: 6
+
+                    Button {
+                        id: scanBtn
+                        Layout.preferredWidth: 56
+                        Layout.fillHeight: true
+                        text: "刷新"
+                        enabled: sdCardManager && !sdCardManager.connected
+
+                        background: Rectangle {
+                            color: parent.pressed ? "#D9D9D9" : (parent.hovered ? "#E6F7FF" : "#F0F0F0")
+                            border.width: 1
+                            border.color: "#D9D9D9"
+                            radius: 4
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            font.pixelSize: 13
+                            color: "#333333"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: {
+                            if (sdCardManager) {
+                                sdCardManager.refreshDrives()
+                            }
+                        }
+                    }
+
+                    ComboBox {
+                        id: sdCardCombo
+                        Layout.preferredWidth: 140
+                        Layout.fillHeight: true
+                        enabled: sdCardManager && !sdCardManager.connected
+                        model: sdCardManager ? sdCardManager.availableDrives : []
+                        textRole: "display"
+
+                        delegate: ItemDelegate {
+                            width: sdCardCombo.width
+                            contentItem: Text {
+                                text: modelData
+                                font.pixelSize: 13
+                                color: "#333333"
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            highlighted: sdCardCombo.highlightedIndex === index
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 4
+                        Rectangle {
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: sdCardManager && sdCardManager.connected ? "#52C41A" : "#D9D9D9"
+                        }
+                        Text {
+                            text: sdCardManager && sdCardManager.connected
+                                  ? sdCardManager.formatSize(sdCardManager.freeSpace) + "/" + sdCardManager.formatSize(sdCardManager.cardSize)
+                                  : "未连接"
+                            font.pixelSize: 12
+                            color: "#666666"
+                        }
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 56
+                        Layout.fillHeight: true
+                        text: sdCardManager && sdCardManager.connected ? "断开" : "连接"
+                        enabled: (sdCardManager && sdCardManager.connected) || sdCardCombo.currentIndex >= 0
+
+                        background: Rectangle {
+                            color: sdCardManager && sdCardManager.connected
+                                   ? (parent.pressed ? "#FF4D4F" : (parent.hovered ? "#FF7875" : "#FF4D4F"))
+                                   : (parent.pressed ? "#096DD9" : (parent.hovered ? "#40A9FF" : "#1890FF"))
+                            radius: 4
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: "#FFFFFF"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: {
+                            if (!sdCardManager) return
+                            if (sdCardManager.connected) {
+                                sdCardManager.disconnectCard()
+                            } else {
+                                var drive = sdCardManager.availableDrives[sdCardCombo.currentIndex]
+                                var letter = drive.letter
+                                sdCardManager.connectCard(letter)
+                            }
+                        }
+                    }
+                }
 
                 LogPanel {
                     id: logPanel

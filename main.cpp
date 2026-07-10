@@ -11,6 +11,8 @@
 #include "src/backend/python/PythonRunner.h"
 #include "src/backend/user/UserAccount.h"
 #include "src/backend/voice/VoiceLibrary.h"
+#include "src/backend/sdcard/SDCardManager.h"
+#include "src/backend/sdcard/DeviceEventFilter.h"
 
 using namespace Qt::StringLiterals;
 
@@ -49,6 +51,16 @@ int main(int argc, char *argv[])
     VoiceLibrary voiceLibrary;
     voiceLibrary.loadConfig();
     engine.rootContext()->setContextProperty("voiceLibrary", &voiceLibrary);
+    
+    SDCardManager sdCardManager;
+    engine.rootContext()->setContextProperty("sdCardManager", &sdCardManager);
+    
+    DeviceEventFilter deviceFilter;
+    app.installNativeEventFilter(&deviceFilter);
+    QObject::connect(&deviceFilter, &DeviceEventFilter::deviceArrived,
+                     &sdCardManager, &SDCardManager::onDeviceArrived);
+    QObject::connect(&deviceFilter, &DeviceEventFilter::deviceRemoved,
+                     &sdCardManager, &SDCardManager::onDeviceRemoved);
     
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
     
