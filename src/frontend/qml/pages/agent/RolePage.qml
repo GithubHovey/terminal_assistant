@@ -1634,11 +1634,12 @@ Rectangle {
                                     anchors.fill: parent
                                     source: {
                                         if (!characterManager) return ""
+                                        var v = characterManager.chatBgVersion
                                         var name = currentRole ? currentRole.name : ""
                                         if (name !== "" && characterManager.chatBgExists(name)) {
                                             var roleDir = characterManager.roleDir(name)
                                             var path = roleDir + "/background.png"
-                                            return "file:///" + path + "?v=" + characterManager.chatBgVersion
+                                            return "file:///" + path + "?v=" + v
                                         }
                                         return ""
                                     }
@@ -1653,6 +1654,7 @@ Rectangle {
                                     color: "#999999"
                                     visible: {
                                         if (!characterManager) return true
+                                        var v = characterManager.chatBgVersion
                                         var name = currentRole ? currentRole.name : ""
                                         if (name === "") return true
                                         return !characterManager.chatBgExists(name)
