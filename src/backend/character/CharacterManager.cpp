@@ -212,7 +212,7 @@ void CharacterManager::updateRoleEnglishName(int index, const QString &englishNa
     }
     
     QString oldEnglishName = m_roles[index].englishName();
-    QString newEnglishName = englishName.toUpper();
+    QString newEnglishName = englishName;
     
     // 限制英文名最大长度为8个字符
     if (newEnglishName.length() > 8) {

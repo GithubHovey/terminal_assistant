@@ -4,11 +4,13 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 Rectangle {
+    id: root
     color: "#FFFFFF"
     
     property bool nfcGenerated: false
     property string nfcResult: ""
     property int pendingDeleteIndex: -1
+    property var characterOptions: voiceLibrary ? voiceLibrary.getCharacterOptions() : []
     
     property var currentRole: characterManager && roleListView.currentIndex >= 0 && roleListView.currentIndex < characterManager.roleCount ? characterManager.roleList[roleListView.currentIndex] : null
     
@@ -221,6 +223,49 @@ Rectangle {
                 
                 onClicked: {
                     englishNameRequiredDialog.close()
+                }
+            }
+        }
+    }
+    
+    Dialog {
+        id: nfcFieldRequiredDialog
+        title: "提示"
+        modal: true
+        anchors.centerIn: parent
+        width: 300
+        
+        ColumnLayout {
+            spacing: 15
+            
+            Text {
+                text: "请先填写完整的智能体ID、声音ID和英文名后再生成NFC信息"
+                font.pixelSize: 14
+                color: "#333333"
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            
+            Button {
+                text: "确定"
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignHCenter
+                
+                background: Rectangle {
+                    color: parent.hovered ? "#40A9FF" : "#1890FF"
+                    radius: 4
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: {
+                    nfcFieldRequiredDialog.close()
                 }
             }
         }
@@ -1251,22 +1296,106 @@ Rectangle {
                                 color: "#333333"
                             }
                             
-                            TextField {
-                                id: englishNameEdit
+                            ComboBox {
+                                id: englishNameCombo
                                 Layout.fillWidth: true
-                                placeholderText: "输入8位以内英文名"
-                                font.pixelSize: 14
-                                maximumLength: 8
-                                text: currentRole ? currentRole.englishName : ""
-                                onEditingFinished: {
-                                    if (roleListView.currentIndex >= 0) {
-                                        characterManager.updateRoleEnglishName(roleListView.currentIndex, text)
+                                Layout.preferredHeight: 36
+                                model: root.characterOptions
+                                textRole: ""
+
+                                delegate: ItemDelegate {
+                                    width: englishNameCombo.width
+                                    height: 40
+                                    contentItem: Text {
+                                        text: modelData.englishName + " (" + modelData.chineseName + ")"
+                                        font.pixelSize: 14
+                                        color: "#333333"
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: 10
+                                        elide: Text.ElideRight
+                                    }
+                                    highlighted: englishNameCombo.highlightedIndex === index
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: 10
+                                    rightPadding: 30
+                                    text: {
+                                        if (englishNameCombo.currentIndex >= 0 && englishNameCombo.currentIndex < englishNameCombo.model.length) {
+                                            var item = englishNameCombo.model[englishNameCombo.currentIndex]
+                                            return item.englishName + " (" + item.chineseName + ")"
+                                        }
+                                        return ""
+                                    }
+                                    font.pixelSize: 14
+                                    color: "#333333"
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                indicator: Canvas {
+                                    x: englishNameCombo.width - width - englishNameCombo.rightPadding
+                                    y: (englishNameCombo.availableHeight - height) / 2
+                                    implicitWidth: 12
+                                    implicitHeight: 8
+                                    onPaint: {
+                                        var ctx = getContext("2d")
+                                        ctx.reset()
+                                        ctx.moveTo(0, 0)
+                                        ctx.lineTo(width, 0)
+                                        ctx.lineTo(width / 2, height)
+                                        ctx.closePath()
+                                        ctx.fillStyle = "#333333"
+                                        ctx.fill()
                                     }
                                 }
-                                onActiveFocusChanged: {
-                                    if (!activeFocus && roleListView.currentIndex >= 0) {
-                                        characterManager.updateRoleEnglishName(roleListView.currentIndex, text)
+
+                                background: Rectangle {
+                                    implicitHeight: 36
+                                    color: englishNameCombo.pressed ? "#d0d0d0" : "#e8e8e8"
+                                    border.color: "#b0b0b0"
+                                    radius: 4
+                                }
+
+                                onActivated: function(index) {
+                                    if (index >= 0 && roleListView.currentIndex >= 0) {
+                                        characterManager.updateRoleEnglishName(roleListView.currentIndex, model[index].englishName)
                                     }
+                                }
+
+                                Connections {
+                                    target: roleListView
+                                    function onCurrentIndexChanged() {
+                                        englishNameCombo.updateSelection()
+                                    }
+                                }
+
+                                onModelChanged: {
+                                    updateSelection()
+                                }
+
+                                function updateSelection() {
+                                    if (!characterManager || roleListView.currentIndex < 0) {
+                                        currentIndex = -1
+                                        return
+                                    }
+                                    var roles = characterManager.getRoleList()
+                                    if (roleListView.currentIndex >= roles.length) {
+                                        currentIndex = -1
+                                        return
+                                    }
+                                    var en = roles[roleListView.currentIndex].englishName
+                                    if (en === "") {
+                                        currentIndex = -1
+                                        return
+                                    }
+                                    for (var i = 0; i < model.length; i++) {
+                                        if (model[i].englishName.toLowerCase() === en.toLowerCase()) {
+                                            currentIndex = i
+                                            return
+                                        }
+                                    }
+                                    currentIndex = -1
                                 }
                             }
                         }
@@ -1472,7 +1601,10 @@ Rectangle {
                                 }
                                 
                                 onClicked: {
-                                    console.log("打开智能体配置与测试")
+                                    var url = currentRole ? currentRole.agentUrl : ""
+                                    if (url.trim() !== "") {
+                                        Qt.openUrlExternally(url)
+                                    }
                                 }
                             }
                         }
@@ -1614,9 +1746,27 @@ Rectangle {
                                 }
                                 
                                 onClicked: {
+                                    if (!characterManager || roleListView.currentIndex < 0)
+                                        return
+                                    
+                                    var roles = characterManager.getRoleList()
+                                    if (roleListView.currentIndex >= roles.length)
+                                        return
+                                    
+                                    var role = roles[roleListView.currentIndex]
+                                    var agentId = role.agentId ? role.agentId.trim() : ""
+                                    var voiceCloneId = role.voiceCloneId ? role.voiceCloneId.trim() : ""
+                                    var englishName = role.englishName ? role.englishName.trim() : ""
+                                    
+                                    if (agentId === "" || voiceCloneId === "" || englishName === "") {
+                                        nfcFieldRequiredDialog.open()
+                                        return
+                                    }
+                                    
                                     nfcGenerated = true
-                                    if (currentRole)
-                                        nfcResult = "NFC_INFO:role=" + currentRole.name + ",id=" + currentRole.id
+                                    nfcResult = "agent:" + agentId + "\n"
+                                              + "voice:" + voiceCloneId + "\n"
+                                              + "name:" + englishName
                                 }
                             }
                         }
