@@ -7,7 +7,7 @@ Rectangle {
     
     Label {
         anchors.centerIn: parent
-        text: "知识库配置"
+        text: "开发中"
         font.pixelSize: 20
         color: "#666666"
     }

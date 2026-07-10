@@ -8,7 +8,7 @@ Rectangle {
     
     Label {
         anchors.centerIn: parent
-        text: qsTr("维护页面")
+        text: qsTr("开发中")
         font.pixelSize: 24
         color: "#666666"
     }
