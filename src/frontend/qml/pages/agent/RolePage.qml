@@ -1721,14 +1721,14 @@ Rectangle {
                             }
                         }
                         
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
-                            color: "#F6FFED"
-                            radius: 4
+                            spacing: 10
                             
                             Button {
-                                anchors.centerIn: parent
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 40
                                 text: "生成NFC信息"
                                 font.pixelSize: 14
                                 
@@ -1769,11 +1769,37 @@ Rectangle {
                                               + "name:" + englishName
                                 }
                             }
+                            
+                            Button {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 40
+                                text: "复制NFC信息"
+                                font.pixelSize: 14
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? "#40A9FF" : "#1890FF"
+                                    radius: 4
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font: parent.font
+                                    color: "#FFFFFF"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                onClicked: {
+                                    nfcResultEdit.selectAll()
+                                    nfcResultEdit.copy()
+                                    nfcResultEdit.deselect()
+                                }
+                            }
                         }
                         
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 70
+                            Layout.preferredHeight: 90
                             color: "#FAFAFA"
                             border.color: "#D9D9D9"
                             border.width: 1
@@ -1789,30 +1815,6 @@ Rectangle {
                                 readOnly: true
                                 text: nfcResult
                                 background: Rectangle { color: "transparent" }
-                            }
-                        }
-                        
-                        Button {
-                            text: "复制NFC信息"
-                            font.pixelSize: 14
-                            
-                            background: Rectangle {
-                                color: parent.hovered ? "#40A9FF" : "#1890FF"
-                                radius: 4
-                            }
-                            
-                            contentItem: Text {
-                                text: parent.text
-                                font: parent.font
-                                color: "#FFFFFF"
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: {
-                                nfcResultEdit.selectAll()
-                                nfcResultEdit.copy()
-                                nfcResultEdit.deselect()
                             }
                         }
                     }
