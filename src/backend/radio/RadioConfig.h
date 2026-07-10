@@ -5,6 +5,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QString>
+#include <QProcess>
 
 struct SongItem {
     QString id;
@@ -49,12 +50,20 @@ signals:
     void songListChanged();
     void configError(const QString &error);
     void coverVersionChanged();
+    void importStarted();
+    void importFinished(const QString &id, bool success);
 
 private:
     QList<SongItem> m_songs;
     int m_coverVersion = 0;
     QString configFilePath() const;
     void migrateFromOldFormat();
+    QString ffmpegPath() const;
+    void onImportProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    QProcess *m_importProcess = nullptr;
+    QString m_pendingImportId;
+    QString m_pendingImportSrc;
+    QString m_pendingImportDest;
 };
 
 #endif // RADIOCONFIG_H

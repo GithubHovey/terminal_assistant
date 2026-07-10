@@ -367,11 +367,48 @@ QString RadioConfig::importSong(const QString &srcFilePath)
     QString mp3Name = id + ".mp3";
     QString destPath = destDir + "/" + mp3Name;
 
-    if (!QFile::copy(srcFilePath, destPath)) {
-        emit configError("复制文件失败: " + srcFilePath + " -> " + destPath);
-        return QString();
+    m_pendingImportId = id;
+    m_pendingImportSrc = srcFilePath;
+    m_pendingImportDest = destPath;
+
+    QString ffmpeg = ffmpegPath();
+    if (ffmpeg.isEmpty() || !QFileInfo::exists(ffmpeg)) {
+        if (!QFile::copy(srcFilePath, destPath)) {
+            emit configError("复制文件失败: " + srcFilePath + " -> " + destPath);
+            return QString();
+        }
+        emit importFinished(id, true);
+        return id;
     }
 
+    if (m_importProcess) {
+        m_importProcess->deleteLater();
+        m_importProcess = nullptr;
+    }
+    m_importProcess = new QProcess(this);
+    m_importProcess->setProcessChannelMode(QProcess::SeparateChannels);
+    connect(m_importProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &RadioConfig::onImportProcessFinished);
+
+    QString tmpPath = destDir + "/_tmp.mp3";
+    QStringList args;
+    args << "-i" << srcFilePath << "-y" << "-ar" << "16000" << "-ac" << "1"
+         << "-acodec" << "libmp3lame" << "-b:a" << "48k" << tmpPath;
+    m_importProcess->start(ffmpeg, args);
+
+    if (!m_importProcess->waitForStarted(5000)) {
+        emit configError("ffmpeg 启动失败: " + m_importProcess->errorString());
+        m_importProcess->deleteLater();
+        m_importProcess = nullptr;
+        if (!QFile::copy(srcFilePath, destPath)) {
+            emit configError("复制文件失败: " + srcFilePath + " -> " + destPath);
+            return QString();
+        }
+        emit importFinished(id, true);
+        return id;
+    }
+
+    emit importStarted();
     return id;
 }
 
@@ -411,4 +448,50 @@ void RadioConfig::incrementCoverVersion()
 {
     m_coverVersion++;
     emit coverVersionChanged();
+}
+
+QString RadioConfig::ffmpegPath() const
+{
+    return QCoreApplication::applicationDirPath() + "/python/ffmpeg.exe";
+}
+
+void RadioConfig::onImportProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    Q_UNUSED(exitStatus);
+    QString id = m_pendingImportId;
+    QString destPath = m_pendingImportDest;
+    QString destDir = destPath.left(destPath.lastIndexOf("/"));
+    QString tmpPath = destDir + "/_tmp.mp3";
+
+    bool success = false;
+    if (exitCode == 0 && QFile::exists(tmpPath)) {
+        QFile::remove(destPath);
+        success = QFile::rename(tmpPath, destPath);
+        if (!success) {
+            emit configError("转码文件重命名失败: " + tmpPath + " -> " + destPath);
+        }
+    } else {
+        QFile::remove(tmpPath);
+        if (exitCode != 0) {
+            QString err = m_importProcess ? QString::fromUtf8(m_importProcess->readAllStandardError()).trimmed() : "";
+            emit configError("ffmpeg 转码失败 (exit=" + QString::number(exitCode) + "): " + err);
+        }
+    }
+
+    if (!success) {
+        success = QFile::copy(m_pendingImportSrc, destPath);
+        if (!success) {
+            emit configError("转码失败且复制回退也失败: " + m_pendingImportSrc + " -> " + destPath);
+        }
+    }
+
+    if (m_importProcess) {
+        m_importProcess->deleteLater();
+        m_importProcess = nullptr;
+    }
+    m_pendingImportId.clear();
+    m_pendingImportSrc.clear();
+    m_pendingImportDest.clear();
+
+    emit importFinished(id, success);
 }

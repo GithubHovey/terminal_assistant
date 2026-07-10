@@ -565,7 +565,55 @@ Rectangle {
             var importedId = radioConfig.importSong(srcPath)
             if (importedId !== "") {
                 pendingImportId = importedId
+                if (importBusyIndicator.running) {
+                    importBusyDialog.open()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: radioConfig
+        function onImportStarted() {
+            importBusyIndicator.running = true
+            importBusyDialog.open()
+        }
+        function onImportFinished(id, success) {
+            importBusyIndicator.running = false
+            importBusyDialog.close()
+            if (success && id === pendingImportId) {
                 coverFileDialog.open()
+            } else if (!success) {
+                pendingImportId = ""
+                pendingImportTitle = ""
+            }
+        }
+    }
+
+    Dialog {
+        id: importBusyDialog
+        title: "导入中"
+        modal: true
+        standardButtons: Dialog.NoButton
+        closePolicy: Dialog.NoAutoClose
+        anchors.centerIn: parent
+        width: 240
+        height: 120
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 10
+
+            BusyIndicator {
+                id: importBusyIndicator
+                running: false
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Label {
+                text: "正在转换音频..."
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignHCenter
             }
         }
     }

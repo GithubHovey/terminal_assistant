@@ -84,6 +84,9 @@ set_target_properties(DeepSpaceAssistant PROPERTIES
 
 file(COPY scripts/dist/convert_image.exe scripts/dist/voice_clone.exe
      DESTINATION ${CMAKE_BINARY_DIR}/python)
+if(EXISTS "${CMAKE_SOURCE_DIR}/scripts/dist/ffmpeg.exe")
+    file(COPY scripts/dist/ffmpeg.exe DESTINATION ${CMAKE_BINARY_DIR}/python)
+endif()
 
 file(COPY materials/option.json
      DESTINATION ${CMAKE_BINARY_DIR}/materials)
