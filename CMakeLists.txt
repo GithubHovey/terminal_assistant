@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent SerialPort)
 
 set(BACKEND_SOURCES
     src/backend/sdcard/SDCardManager.cpp
@@ -18,6 +18,7 @@ set(BACKEND_SOURCES
     src/backend/character/CharacterManager.cpp
     src/backend/image/ImageProcessor.cpp
     src/backend/maintenance/MaintenanceManager.cpp
+    src/backend/maintenance/ESPFlasher.cpp
     src/backend/python/PythonRunner.cpp
     src/backend/logger/Logger.cpp
     src/backend/user/RoleInfo.cpp
@@ -35,6 +36,7 @@ set(BACKEND_HEADERS
     src/backend/character/CharacterManager.h
     src/backend/image/ImageProcessor.h
     src/backend/maintenance/MaintenanceManager.h
+    src/backend/maintenance/ESPFlasher.h
     src/backend/python/PythonRunner.h
     src/backend/logger/Logger.h
     src/backend/user/RoleInfo.h
@@ -76,6 +78,7 @@ target_link_libraries(DeepSpaceAssistant PRIVATE
     Qt6::QuickControls2
     Qt6::Multimedia
     Qt6::Concurrent
+    Qt6::SerialPort
 )
 
 set_target_properties(DeepSpaceAssistant PROPERTIES
@@ -86,6 +89,9 @@ file(COPY scripts/dist/convert_image.exe scripts/dist/voice_clone.exe
      DESTINATION ${CMAKE_BINARY_DIR}/python)
 if(EXISTS "${CMAKE_SOURCE_DIR}/scripts/dist/ffmpeg.exe")
     file(COPY scripts/dist/ffmpeg.exe DESTINATION ${CMAKE_BINARY_DIR}/python)
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/scripts/dist/esptool.exe")
+    file(COPY scripts/dist/esptool.exe DESTINATION ${CMAKE_BINARY_DIR}/python)
 endif()
 
 file(COPY materials/option.json

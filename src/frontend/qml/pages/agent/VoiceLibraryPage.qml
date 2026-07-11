@@ -12,6 +12,7 @@ Rectangle {
     property bool isCreatingNew: false
     property var characterOptions: voiceLibrary ? voiceLibrary.getCharacterOptions() : []
     property string pendingDeleteCloudVoiceId: ""
+    property string pendingAddCloudVoiceId: ""
     
     MediaPlayer {
         id: previewPlayer
@@ -714,7 +715,7 @@ Rectangle {
         standardButtons: Dialog.Close
         
         anchors.centerIn: parent
-        width: 700
+        width: 750
         height: 450
         
         ColumnLayout {
@@ -821,7 +822,7 @@ Rectangle {
                             }
                             
                             Text {
-                                Layout.preferredWidth: 50
+                                Layout.preferredWidth: 100
                                 text: "操作"
                                 font.pixelSize: 13
                                 font.bold: true
@@ -875,7 +876,36 @@ Rectangle {
                             }
                             
                             Button {
-                                Layout.preferredWidth: 50
+                                Layout.preferredWidth: 45
+                                Layout.preferredHeight: 26
+                                text: "添加"
+                                font.pixelSize: 11
+                                enabled: modelData.status === "OK"
+                                
+                                background: Rectangle {
+                                    color: {
+                                        if (!parent.enabled) return "#BFBFBF"
+                                        return parent.hovered ? "#73D13D" : "#52C41A"
+                                    }
+                                    radius: 3
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font: parent.font
+                                    color: "#FFFFFF"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                onClicked: {
+                                    root.pendingAddCloudVoiceId = modelData.voice_id || ""
+                                    addCloudVoiceDialog.open()
+                                }
+                            }
+                            
+                            Button {
+                                Layout.preferredWidth: 45
                                 Layout.preferredHeight: 26
                                 text: "删除"
                                 font.pixelSize: 11
@@ -1038,6 +1068,152 @@ Rectangle {
             if (listSuccess && pythonRunner.getOutput().trim() !== "") {
                 voiceLibrary.updateCloudVoices(pythonRunner.getOutput().trim())
             }
+        }
+    }
+    
+    Dialog {
+        id: addCloudVoiceDialog
+        title: "添加云端声音到本地"
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        
+        anchors.centerIn: parent
+        width: 400
+        
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+            
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text {
+                    text: "Voice ID:"
+                    font.pixelSize: 14
+                    color: "#666666"
+                    Layout.preferredWidth: 80
+                }
+                
+                Text {
+                    text: root.pendingAddCloudVoiceId
+                    font.pixelSize: 12
+                    font.family: "Consolas, Monaco, monospace"
+                    color: "#333333"
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+            }
+            
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text {
+                    text: "角色:"
+                    font.pixelSize: 14
+                    color: "#666666"
+                    Layout.preferredWidth: 80
+                }
+                
+                ComboBox {
+                    id: addCharacterComboBox
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    model: root.characterOptions
+                    
+                    textRole: ""
+                    
+                    delegate: ItemDelegate {
+                        width: addCharacterComboBox.width
+                        height: 40
+                        contentItem: Text {
+                            text: modelData.chineseName + " (" + modelData.englishName + ")"
+                            font.pixelSize: 14
+                            color: "#333333"
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 10
+                        }
+                        highlighted: addCharacterComboBox.highlightedIndex === index
+                    }
+                    
+                    contentItem: Text {
+                        leftPadding: 10
+                        rightPadding: 30
+                        text: addCharacterComboBox.characterDisplayText
+                        font.pixelSize: 14
+                        color: "#333333"
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    indicator: Canvas {
+                        x: addCharacterComboBox.width - width - addCharacterComboBox.rightPadding
+                        y: (addCharacterComboBox.availableHeight - height) / 2
+                        width: 12
+                        height: 8
+                        contextType: "2d"
+                        onPaint: {
+                            context.reset()
+                            context.moveTo(0, 0)
+                            context.lineTo(width, 0)
+                            context.lineTo(width / 2, height)
+                            context.closePath()
+                            context.fillStyle = "#666666"
+                            context.fill()
+                        }
+                    }
+                    
+                    background: Rectangle {
+                        color: "#FFFFFF"
+                        border.color: "#D9D9D9"
+                        border.width: 1
+                        radius: 4
+                    }
+                    
+                    property string characterDisplayText: ""
+                    
+                    Component.onCompleted: {
+                        updateDisplayText()
+                    }
+                    
+                    onCurrentIndexChanged: {
+                        updateDisplayText()
+                    }
+                    
+                    function updateDisplayText() {
+                        if (currentIndex >= 0 && currentIndex < root.characterOptions.length) {
+                            var item = root.characterOptions[currentIndex]
+                            characterDisplayText = item.chineseName + " (" + item.englishName + ")"
+                        }
+                    }
+                }
+            }
+        }
+        
+        onAccepted: {
+            if (root.pendingAddCloudVoiceId === "") {
+                logger.logWarning("未选择要添加的声音")
+                return
+            }
+            
+            if (addCharacterComboBox.currentIndex < 0) {
+                logger.logWarning("请选择角色")
+                return
+            }
+            
+            var character = root.characterOptions[addCharacterComboBox.currentIndex]
+            var name = character.chineseName + " (" + character.englishName + ")"
+            voiceLibrary.addVoice(root.pendingAddCloudVoiceId, name, character.englishName)
+            logger.logInfo("从云端添加声音成功: " + root.pendingAddCloudVoiceId)
+            
+            root.pendingAddCloudVoiceId = ""
+            addCharacterComboBox.currentIndex = -1
+        }
+        
+        onRejected: {
+            root.pendingAddCloudVoiceId = ""
+            addCharacterComboBox.currentIndex = -1
         }
     }
 }
