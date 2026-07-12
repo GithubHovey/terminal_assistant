@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
     
     QQmlApplicationEngine engine;
     
+    engine.rootContext()->setContextProperty("appVersion", QStringLiteral("1.0.0"));
+    
     RadioConfig radioConfig;
     radioConfig.loadConfig();
     engine.rootContext()->setContextProperty("radioConfig", &radioConfig);

@@ -10,7 +10,7 @@ ApplicationWindow {
     visible: true
     width: 1080
     height: 720
-    title: qsTr("深空联合助手")
+    title: qsTr("深空联合助手") + " v" + appVersion
     color: "#FFFFFF"
 
     Connections {
