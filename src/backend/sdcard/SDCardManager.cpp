@@ -168,6 +168,32 @@ bool SDCardManager::connectCard(const QString &driveLetter)
     m_driveLetter = driveLetter;
     m_cardSize = storage.bytesTotal();
     m_freeSpace = storage.bytesFree();
+
+    m_sdSysrootPath = QCoreApplication::applicationDirPath() + "/sd_sysroot";
+    QDir sysrootDir(m_sdSysrootPath);
+    if (sysrootDir.exists()) {
+        sysrootDir.removeRecursively();
+    }
+    if (!sysrootDir.mkpath(m_sdSysrootPath)) {
+        QString errorMsg = QString("无法创建 sd_sysroot 目录: %1").arg(m_sdSysrootPath);
+        Logger::instance().logError(errorMsg);
+        emit errorOccurred(errorMsg);
+        return false;
+    }
+
+    Logger::instance().logInfo("正在备份SD卡内容到 sd_sysroot...");
+    if (!backupSDCardToLocal()) {
+        QString errorMsg = "备份SD卡内容失败，拒绝连接";
+        Logger::instance().logError(errorMsg);
+        emit errorOccurred(errorMsg);
+        m_driveLetter.clear();
+        m_cardSize = 0;
+        m_freeSpace = 0;
+        m_sdSysrootPath.clear();
+        return false;
+    }
+    Logger::instance().logInfo("SD卡内容已备份到 sd_sysroot");
+
     m_connected = true;
 
     startConnectionMonitor();
@@ -194,6 +220,7 @@ void SDCardManager::disconnectCard()
 
     m_connected = false;
     m_driveLetter.clear();
+    m_sdSysrootPath.clear();
     m_cardSize = 0;
     m_freeSpace = 0;
 
@@ -260,9 +287,9 @@ void SDCardManager::applyResources()
     QString appDir = QCoreApplication::applicationDirPath();
     QString sdRoot = m_driveLetter + "/";
     QString musicSrc = appDir + "/music";
-    QString musicDst = sdRoot + "music";
+    QString musicDst = m_sdSysrootPath + "/music";
     QString charSrc = appDir + "/character";
-    QString charDst = sdRoot + "character";
+    QString charDst = m_sdSysrootPath + "/character";
 
     if (!QDir(musicSrc).exists()) {
         emit applyFinished(false, "music目录不存在");
@@ -273,12 +300,13 @@ void SDCardManager::applyResources()
         return;
     }
 
-    Logger::instance().logInfo("开始复制资源到SD卡...");
+    Logger::instance().logInfo("开始复制资源到 sd_sysroot 并同步到SD卡...");
 
-    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst]() -> bool {
-        QDir sdRootDir(musicDst);
-        if (sdRootDir.exists()) {
-            sdRootDir.removeRecursively();
+    QString sdSysrootPath = m_sdSysrootPath;
+    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst, sdRoot, sdSysrootPath]() -> bool {
+        QDir musicDstDir(musicDst);
+        if (musicDstDir.exists()) {
+            musicDstDir.removeRecursively();
         }
         QDir charDstDir(charDst);
         if (charDstDir.exists()) {
@@ -291,6 +319,14 @@ void SDCardManager::applyResources()
         if (!copyDirectoryRecursive(charSrc, charDst)) {
             return false;
         }
+
+        QDir sdRootDir(sdRoot);
+        if (sdRootDir.exists()) {
+            sdRootDir.removeRecursively();
+        }
+        if (!copyDirectoryRecursive(sdSysrootPath, sdRoot)) {
+            return false;
+        }
         return true;
     });
 
@@ -299,11 +335,11 @@ void SDCardManager::applyResources()
     connect(m_applyWatcher, &QFutureWatcher<bool>::finished, this, [this]() {
         bool success = m_applyWatcher->result();
         if (success) {
-            Logger::instance().logInfo("资源已成功复制到SD卡");
-            emit applyFinished(true, "资源已成功复制到SD卡");
+            Logger::instance().logInfo("资源已成功同步到SD卡");
+            emit applyFinished(true, "资源已成功同步到SD卡");
         } else {
-            Logger::instance().logError("复制资源到SD卡失败");
-            emit applyFinished(false, "复制资源到SD卡失败");
+            Logger::instance().logError("同步资源到SD卡失败");
+            emit applyFinished(false, "同步资源到SD卡失败");
         }
     });
 }
@@ -330,6 +366,28 @@ bool SDCardManager::copyDirectoryRecursive(const QString &srcPath, const QString
             QString dstFile = dstPath + "/" + info.fileName();
             QFile::remove(dstFile);
             if (!QFile::copy(info.absoluteFilePath(), dstFile)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool SDCardManager::backupSDCardToLocal()
+{
+    QString sdRoot = m_driveLetter + "/";
+    QDir sdDir(sdRoot);
+
+    const QFileInfoList entries = sdDir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs | QDir::Hidden | QDir::System);
+    for (const QFileInfo &info : entries) {
+        QString dstPath = m_sdSysrootPath + "/" + info.fileName();
+        if (info.isDir()) {
+            if (!copyDirectoryRecursive(info.absoluteFilePath(), dstPath)) {
+                return false;
+            }
+        } else {
+            QFile::remove(dstPath);
+            if (!QFile::copy(info.absoluteFilePath(), dstPath)) {
                 return false;
             }
         }

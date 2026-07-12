@@ -51,12 +51,14 @@ private:
     QVariantList scanRemovableDrives();
     static QString formatSizeStatic(qint64 bytes);
     static bool copyDirectoryRecursive(const QString &srcPath, const QString &dstPath);
+    bool backupSDCardToLocal();
 
     QTimer *m_connTimer;
     QTimer *m_arrivalDebounceTimer;
     QFutureWatcher<bool> *m_applyWatcher;
     bool m_connected;
     QString m_driveLetter;
+    QString m_sdSysrootPath;
     qint64 m_cardSize;
     qint64 m_freeSpace;
     QVariantList m_availableDrives;
