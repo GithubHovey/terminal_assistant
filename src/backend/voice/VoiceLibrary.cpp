@@ -142,6 +142,10 @@ void VoiceLibrary::addVoice(const QString &voiceId, const QString &name, const Q
         return;
     }
 
+    if (!ensureVoiceDir(characterName)) {
+        return;
+    }
+
     VoiceItem item;
     item.voiceId = voiceId;
     item.name = name;
