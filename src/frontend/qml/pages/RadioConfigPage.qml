@@ -919,16 +919,8 @@ Rectangle {
                                 if (binSuccess) {
                                     logger.logInfo("封面处理完成: " + binPath)
                                     var coverPath = songId + "/cover.bin"
-                                    // 更新模型中的数据
-                                    for (var i = 0; i < songModel.count; i++) {
-                                        if (songModel.get(i).id === songId) {
-                                            songModel.setProperty(i, "cover", coverPath)
-                                            radioConfig.updateSongCover(i, coverPath)
-                                            break
-                                        }
-                                    }
+                                    coverFileDialog.finishImport(coverPath)
                                     radioConfig.incrementCoverVersion()
-                                    radioConfig.saveConfig()
                                     coverCropDialog.close()
                                 } else {
                                     logger.logError("BIN转换失败: " + pythonRunner.getOutput())
