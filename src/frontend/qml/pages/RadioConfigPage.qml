@@ -273,7 +273,11 @@ Rectangle {
                         anchors.fill: parent
                         source: {
                             if (!model.cover || !radioConfig) return ""
-                            var path = "file:///" + radioConfig.musicDir() + "/" + model.cover
+                            var coverPath = model.cover
+                            if (coverPath.endsWith(".bin")) {
+                                coverPath = coverPath.substring(0, coverPath.length - 4) + ".png"
+                            }
+                            var path = "file:///" + radioConfig.musicDir() + "/" + coverPath
                             return path + "?v=" + radioConfig.coverVersion
                         }
                         fillMode: Image.PreserveAspectCrop
@@ -855,8 +859,8 @@ Rectangle {
                             
                             // 计算输出路径
                             var songDir = radioConfig.songDir(songId)
-                            var pngPath = songDir + "/" + songId + ".png"
-                            var binPath = songDir + "/" + songId + ".bin"
+                            var pngPath = songDir + "/cover.png"
+                            var binPath = songDir + "/cover.bin"
                             
                             console.log("songDir:", songDir)
                             console.log("pngPath:", pngPath)
@@ -914,8 +918,7 @@ Rectangle {
                                 
                                 if (binSuccess) {
                                     logger.logInfo("封面处理完成: " + binPath)
-                                    // 更新封面路径
-                                    var coverPath = songId + "/" + songId + ".png"
+                                    var coverPath = songId + "/cover.bin"
                                     // 更新模型中的数据
                                     for (var i = 0; i < songModel.count; i++) {
                                         if (songModel.get(i).id === songId) {
@@ -990,7 +993,11 @@ Rectangle {
                     anchors.fill: parent
                     source: {
                         if (!coverChangeDialog.coverPath || !radioConfig) return ""
-                        var path = "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath
+                        var coverPath = coverChangeDialog.coverPath
+                        if (coverPath.endsWith(".bin")) {
+                            coverPath = coverPath.substring(0, coverPath.length - 4) + ".png"
+                        }
+                        var path = "file:///" + radioConfig.musicDir() + "/" + coverPath
                         return path + "?v=" + radioConfig.coverVersion
                     }
                     fillMode: Image.PreserveAspectCrop
@@ -1010,7 +1017,11 @@ Rectangle {
                     anchors.fill: parent
                     source: {
                         if (!coverChangeDialog.coverPath || !radioConfig) return ""
-                        var path = "file:///" + radioConfig.musicDir() + "/" + coverChangeDialog.coverPath
+                        var coverPath = coverChangeDialog.coverPath
+                        if (coverPath.endsWith(".bin")) {
+                            coverPath = coverPath.substring(0, coverPath.length - 4) + ".png"
+                        }
+                        var path = "file:///" + radioConfig.musicDir() + "/" + coverPath
                         return path + "?v=" + radioConfig.coverVersion
                     }
                     fillMode: Image.PreserveAspectCrop
