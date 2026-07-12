@@ -9,6 +9,8 @@ Rectangle {
 
     property string firmwarePath: ""
     property string detectedChip: ""
+    property bool shuttingDown: false
+    Component.onDestruction: shuttingDown = true
 
     Component.onCompleted: {
         espFlasher.scanPorts()
@@ -93,7 +95,7 @@ Rectangle {
                         Button {
                             text: "刷新"
                             font.pixelSize: 13
-                            enabled: !espFlasher.running
+                            enabled: !shuttingDown && !espFlasher.running
                             onClicked: espFlasher.scanPorts()
 
                             background: Rectangle {
@@ -128,8 +130,8 @@ Rectangle {
                                 id: portCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 36
-                                enabled: !espFlasher.running && !espFlasher.monitoring
-                                model: espFlasher.availablePorts
+                                enabled: !shuttingDown && !espFlasher.running && !espFlasher.monitoring
+                                model: shuttingDown ? [] : espFlasher.availablePorts
                                 textRole: ""
                                 delegate: ItemDelegate {
                                     width: portCombo.width
@@ -142,7 +144,7 @@ Rectangle {
                                     highlighted: portCombo.highlightedIndex === index
                                 }
                                 contentItem: Text {
-                                    text: portCombo.currentIndex >= 0
+                                    text: portCombo.currentIndex >= 0 && !shuttingDown
                                           ? espFlasher.availablePorts[portCombo.currentIndex].description
                                           : "选择串口"
                                     font.pixelSize: 13
@@ -171,7 +173,7 @@ Rectangle {
                                 id: baudCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 36
-                                enabled: !espFlasher.running && !espFlasher.monitoring
+                                enabled: !shuttingDown && !espFlasher.running && !espFlasher.monitoring
                                 model: ["9600", "115200", "230400", "460800", "921600"]
                                 currentIndex: 1
                                 contentItem: Text {
@@ -202,7 +204,7 @@ Rectangle {
                                 id: chipCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 36
-                                enabled: !espFlasher.running
+                                enabled: !shuttingDown && !espFlasher.running
                                 model: ["esp32", "esp32s2", "esp32s3", "esp32c3", "esp32c6", "esp32h2", "esp8266"]
                                 contentItem: Text {
                                     text: chipCombo.displayText
@@ -226,16 +228,16 @@ Rectangle {
                         spacing: 12
 
                         Button {
-                            text: espFlasher.monitoring ? "断开监视" : "连接监视"
+                            text: !shuttingDown && espFlasher.monitoring ? "断开监视" : "连接监视"
                             font.pixelSize: 13
                             font.bold: true
-                            enabled: portCombo.currentIndex >= 0 && !espFlasher.running
+                            enabled: !shuttingDown && portCombo.currentIndex >= 0 && !espFlasher.running
                             Layout.preferredHeight: 36
 
                             background: Rectangle {
                                 color: {
                                     if (!parent.enabled) return "#F5F5F5"
-                                    if (espFlasher.monitoring)
+                                    if (!shuttingDown && espFlasher.monitoring)
                                         return parent.pressed ? "#CF1322" : (parent.hovered ? "#FF7875" : "#FF4D4F")
                                     else
                                         return parent.pressed ? "#096DD9" : (parent.hovered ? "#40A9FF" : "#1890FF")
@@ -267,7 +269,7 @@ Rectangle {
                         Button {
                             text: "读取芯片信息"
                             font.pixelSize: 13
-                            enabled: portCombo.currentIndex >= 0 && !espFlasher.running && !espFlasher.monitoring
+                            enabled: !shuttingDown && portCombo.currentIndex >= 0 && !espFlasher.running && !espFlasher.monitoring
                             Layout.preferredHeight: 36
 
                             background: Rectangle {
@@ -294,15 +296,15 @@ Rectangle {
 
                         RowLayout {
                             spacing: 6
-                            visible: espFlasher.monitoring || detectedChip.length > 0
+                            visible: !shuttingDown && (espFlasher.monitoring || detectedChip.length > 0)
                             Rectangle {
                                 width: 8
                                 height: 8
                                 radius: 4
-                                color: espFlasher.monitoring ? "#52C41A" : "#D9D9D9"
+                                color: !shuttingDown && espFlasher.monitoring ? "#52C41A" : "#D9D9D9"
                             }
                             Text {
-                                text: detectedChip.length > 0 ? detectedChip : (espFlasher.monitoring ? "监视中" : "")
+                                text: detectedChip.length > 0 ? detectedChip : (!shuttingDown && espFlasher.monitoring ? "监视中" : "")
                                 font.pixelSize: 12
                                 color: "#666666"
                                 elide: Text.ElideRight
@@ -357,7 +359,7 @@ Rectangle {
                         Button {
                             text: "浏览"
                             font.pixelSize: 13
-                            enabled: !espFlasher.running
+                            enabled: !shuttingDown && !espFlasher.running
                             Layout.preferredHeight: 36
                             Layout.preferredWidth: 70
 
@@ -396,7 +398,7 @@ Rectangle {
                                 Layout.preferredHeight: 36
                                 text: "0x10000"
                                 font.pixelSize: 13
-                                enabled: !espFlasher.running
+                                enabled: !shuttingDown && !espFlasher.running
                                 background: Rectangle {
                                     color: "#FFFFFF"
                                     border.width: 1
@@ -418,7 +420,7 @@ Rectangle {
                                 id: flashModeCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 36
-                                enabled: !espFlasher.running
+                                enabled: !shuttingDown && !espFlasher.running
                                 model: ["dio", "qio", "dout", "qout"]
                                 contentItem: Text {
                                     text: flashModeCombo.displayText
@@ -448,7 +450,7 @@ Rectangle {
                                 id: flashSizeCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 36
-                                enabled: !espFlasher.running
+                                enabled: !shuttingDown && !espFlasher.running
                                 model: ["4MB", "2MB", "8MB", "16MB", "1MB"]
                                 contentItem: Text {
                                     text: flashSizeCombo.displayText
@@ -472,17 +474,17 @@ Rectangle {
                         spacing: 12
 
                         Button {
-                            text: espFlasher.running ? "中止" : "烧录固件"
+                            text: !shuttingDown && espFlasher.running ? "中止" : "烧录固件"
                             font.pixelSize: 13
                             font.bold: true
                             Layout.preferredHeight: 36
                             Layout.preferredWidth: 120
-                            enabled: espFlasher.running || (portCombo.currentIndex >= 0 && firmwarePath.length > 0)
+                            enabled: !shuttingDown && (espFlasher.running || (portCombo.currentIndex >= 0 && firmwarePath.length > 0))
 
                             background: Rectangle {
                                 color: {
                                     if (!parent.enabled) return "#F5F5F5"
-                                    if (espFlasher.running)
+                                    if (!shuttingDown && espFlasher.running)
                                         return parent.pressed ? "#CF1322" : (parent.hovered ? "#FF7875" : "#FF4D4F")
                                     return parent.pressed ? "#096DD9" : (parent.hovered ? "#40A9FF" : "#1890FF")
                                 }
@@ -518,7 +520,7 @@ Rectangle {
                             text: "擦除Flash"
                             font.pixelSize: 13
                             font.bold: true
-                            enabled: portCombo.currentIndex >= 0 && !espFlasher.running && !espFlasher.monitoring
+                            enabled: !shuttingDown && portCombo.currentIndex >= 0 && !espFlasher.running && !espFlasher.monitoring
                             Layout.preferredHeight: 36
                             Layout.preferredWidth: 120
 
@@ -561,7 +563,7 @@ Rectangle {
                 Layout.preferredHeight: 40
                 radius: 8
                 color: "#FFFFFF"
-                visible: espFlasher.running
+                visible: !shuttingDown && espFlasher.running
 
                 RowLayout {
                     anchors.fill: parent
@@ -574,7 +576,7 @@ Rectangle {
                         Layout.preferredHeight: 20
                         from: 0
                         to: 100
-                        value: espFlasher.progress
+                        value: !shuttingDown ? espFlasher.progress : 0
 
                         background: Rectangle {
                             color: "#F0F0F0"
@@ -591,7 +593,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: espFlasher.progress + "%"
+                        text: (!shuttingDown ? espFlasher.progress : 0) + "%"
                         font.pixelSize: 13
                         font.bold: true
                         color: "#1890FF"
@@ -599,7 +601,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: espFlasher.currentOperation
+                        text: !shuttingDown ? espFlasher.currentOperation : ""
                         font.pixelSize: 13
                         color: "#666666"
                     }
