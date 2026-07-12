@@ -24,10 +24,9 @@ public:
 
     Q_INVOKABLE QVariantList getRoleList() const;
     Q_INVOKABLE int roleCount() const;
-    Q_INVOKABLE void addRole(const QString &name);
+    Q_INVOKABLE void addRole(const QString &name, const QString &englishName);
     Q_INVOKABLE void removeRole(int index);
     Q_INVOKABLE void updateRoleName(int index, const QString &name);
-    Q_INVOKABLE void updateRoleEnglishName(int index, const QString &englishName);
     Q_INVOKABLE void updateRoleAgentId(int index, const QString &agentId);
     Q_INVOKABLE void updateRoleAgentUrl(int index, const QString &agentUrl);
     Q_INVOKABLE void updateRolePrompt(int index, const QString &prompt);

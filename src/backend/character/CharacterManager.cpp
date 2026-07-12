@@ -32,7 +32,11 @@ QString CharacterManager::roleDir(const QString &name) const
     if (name.isEmpty()) {
         return QString();
     }
-    return characterDir() + "/" + name;
+    QString englishName = findEnglishNameByName(name);
+    if (englishName.isEmpty()) {
+        return characterDir() + "/" + name;
+    }
+    return characterDir() + "/" + englishName;
 }
 
 bool CharacterManager::ensureRoleDir(const QString &name)
@@ -158,18 +162,19 @@ int CharacterManager::roleCount() const
     return m_roles.size();
 }
 
-void CharacterManager::addRole(const QString &name)
+void CharacterManager::addRole(const QString &name, const QString &englishName)
 {
     if (name.trimmed().isEmpty()) {
         return;
     }
 
     RoleInfo role(name.trimmed(), nextId());
+    role.setEnglishName(englishName.trimmed());
     m_roles.append(role);
     ensureRoleDir(name.trimmed());
     saveConfig();
     emit roleListChanged();
-    Logger::instance().logInfo("Added role: " + name);
+    Logger::instance().logInfo("Added role: " + name + " (" + englishName + ")");
 }
 
 void CharacterManager::removeRole(int index)
@@ -202,66 +207,6 @@ void CharacterManager::updateRoleName(int index, const QString &name)
         return;
     }
     m_roles[index].setName(name);
-    saveConfig();
-}
-
-void CharacterManager::updateRoleEnglishName(int index, const QString &englishName)
-{
-    if (index < 0 || index >= m_roles.size()) {
-        return;
-    }
-    
-    QString oldEnglishName = m_roles[index].englishName();
-    QString newEnglishName = englishName;
-    
-    // 限制英文名最大长度为8个字符
-    if (newEnglishName.length() > 8) {
-        newEnglishName = newEnglishName.left(8);
-    }
-    
-    // 如果英文名没有变化，直接返回
-    if (oldEnglishName == newEnglishName) {
-        return;
-    }
-    
-    // 如果旧英文名不为空，重命名相关文件
-    if (!oldEnglishName.isEmpty()) {
-        QString dir = roleDir(m_roles[index].name());
-        QDir dirObj(dir);
-        
-        if (dirObj.exists()) {
-            // 重命名 PNG 文件
-            QString oldPngPath = dir + "/" + oldEnglishName + ".png";
-            QString newPngPath = dir + "/" + newEnglishName + ".png";
-            if (QFile::exists(oldPngPath)) {
-                if (QFile::exists(newPngPath)) {
-                    QFile::remove(newPngPath);
-                }
-                if (QFile::rename(oldPngPath, newPngPath)) {
-                    Logger::instance().logInfo("重命名头像: " + oldPngPath + " -> " + newPngPath);
-                } else {
-                    Logger::instance().logError("重命名头像失败: " + oldPngPath);
-                }
-            }
-            
-            // 重命名 BIN 文件
-            QString oldBinPath = dir + "/" + oldEnglishName + ".bin";
-            QString newBinPath = dir + "/" + newEnglishName + ".bin";
-            if (QFile::exists(oldBinPath)) {
-                if (QFile::exists(newBinPath)) {
-                    QFile::remove(newBinPath);
-                }
-                if (QFile::rename(oldBinPath, newBinPath)) {
-                    Logger::instance().logInfo("重命名BIN: " + oldBinPath + " -> " + newBinPath);
-                } else {
-                    Logger::instance().logError("重命名BIN失败: " + oldBinPath);
-                }
-            }
-        }
-    }
-    
-    m_roles[index].setEnglishName(newEnglishName);
-    ensureRoleDir(m_roles[index].name());
     saveConfig();
 }
 

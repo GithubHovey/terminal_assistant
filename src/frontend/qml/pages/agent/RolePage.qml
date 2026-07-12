@@ -37,16 +37,68 @@ Rectangle {
             spacing: 10
             
             Text {
-                text: "请输入角色名称:"
+                text: "请选择角色:"
                 font.pixelSize: 14
                 color: "#333333"
             }
             
-            TextField {
-                id: roleNameInput
+            ComboBox {
+                id: roleSelectCombo
                 Layout.preferredWidth: 200
-                placeholderText: "角色名称"
-                font.pixelSize: 14
+                
+                delegate: ItemDelegate {
+                    width: roleSelectCombo.width
+                    height: 40
+                    contentItem: Text {
+                        text: modelData.chineseName + " (" + modelData.englishName + ")"
+                        font.pixelSize: 14
+                        color: "#333333"
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 10
+                        elide: Text.ElideRight
+                    }
+                    highlighted: roleSelectCombo.highlightedIndex === index
+                }
+                
+                contentItem: Text {
+                    leftPadding: 10
+                    rightPadding: 30
+                    text: {
+                        if (roleSelectCombo.currentIndex >= 0 && roleSelectCombo.currentIndex < roleSelectCombo.model.length) {
+                            var item = roleSelectCombo.model[roleSelectCombo.currentIndex]
+                            return item.chineseName + " (" + item.englishName + ")"
+                        }
+                        return ""
+                    }
+                    font.pixelSize: 14
+                    color: "#333333"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                indicator: Canvas {
+                    x: roleSelectCombo.width - width - roleSelectCombo.rightPadding
+                    y: (roleSelectCombo.availableHeight - height) / 2
+                    implicitWidth: 12
+                    implicitHeight: 8
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.reset()
+                        ctx.moveTo(0, 0)
+                        ctx.lineTo(width, 0)
+                        ctx.lineTo(width / 2, height)
+                        ctx.closePath()
+                        ctx.fillStyle = "#333333"
+                        ctx.fill()
+                    }
+                }
+                
+                background: Rectangle {
+                    implicitHeight: 36
+                    color: roleSelectCombo.pressed ? "#d0d0d0" : "#e8e8e8"
+                    border.color: "#b0b0b0"
+                    radius: 4
+                }
             }
             
             RowLayout {
@@ -55,9 +107,13 @@ Rectangle {
                 Button {
                     text: "确定"
                     font.pixelSize: 14
+                    enabled: roleSelectCombo.currentIndex >= 0
                     
                     background: Rectangle {
-                        color: parent.hovered ? "#40A9FF" : "#1890FF"
+                        color: {
+                            if (!parent.enabled) return "#BFBFBF"
+                            return parent.hovered ? "#40A9FF" : "#1890FF"
+                        }
                         radius: 4
                     }
                     
@@ -70,9 +126,9 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        if (roleNameInput.text.trim() !== "") {
-                            characterManager.addRole(roleNameInput.text.trim())
-                            roleNameInput.text = ""
+                        if (roleSelectCombo.currentIndex >= 0) {
+                            var selected = roleSelectCombo.model[roleSelectCombo.currentIndex]
+                            characterManager.addRole(selected.chineseName, selected.englishName)
                             addRoleDialog.close()
                         }
                     }
@@ -98,7 +154,6 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        roleNameInput.text = ""
                         addRoleDialog.close()
                     }
                 }
@@ -106,7 +161,24 @@ Rectangle {
         }
         
         onOpened: {
-            roleNameInput.forceActiveFocus()
+            var existingNames = []
+            if (characterManager) {
+                var roles = characterManager.getRoleList()
+                for (var i = 0; i < roles.length; i++) {
+                    existingNames.push(roles[i].name)
+                }
+            }
+            var filtered = []
+            for (var j = 0; j < root.characterOptions.length; j++) {
+                var opt = root.characterOptions[j]
+                if (existingNames.indexOf(opt.chineseName) === -1) {
+                    filtered.push(opt)
+                }
+            }
+            roleSelectCombo.model = filtered
+            if (filtered.length > 0) {
+                roleSelectCombo.currentIndex = 0
+            }
         }
     }
     
@@ -1238,22 +1310,11 @@ Rectangle {
                                     color: "#333333"
                                 }
                                 
-                                TextField {
-                                    id: roleNameEdit
+                                Text {
                                     Layout.fillWidth: true
-                                    placeholderText: "输入角色名称"
-                                    font.pixelSize: 14
                                     text: currentRole ? currentRole.name : ""
-                                    onEditingFinished: {
-                                        if (roleListView.currentIndex >= 0) {
-                                            characterManager.updateRoleName(roleListView.currentIndex, text)
-                                        }
-                                    }
-                                    onActiveFocusChanged: {
-                                        if (!activeFocus && roleListView.currentIndex >= 0) {
-                                            characterManager.updateRoleName(roleListView.currentIndex, text)
-                                        }
-                                    }
+                                    font.pixelSize: 14
+                                    color: "#333333"
                                 }
                                 
                                 Button {
@@ -1280,122 +1341,6 @@ Rectangle {
                                             avatarDialog.open()
                                         }
                                     }
-                                }
-                            }
-                        }
-                        
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: 2
-                            rowSpacing: 15
-                            columnSpacing: 20
-                            
-                            Text {
-                                text: "英文名(SD卡):"
-                                font.pixelSize: 14
-                                color: "#333333"
-                            }
-                            
-                            ComboBox {
-                                id: englishNameCombo
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 36
-                                model: root.characterOptions
-                                textRole: ""
-
-                                delegate: ItemDelegate {
-                                    width: englishNameCombo.width
-                                    height: 40
-                                    contentItem: Text {
-                                        text: modelData.englishName + " (" + modelData.chineseName + ")"
-                                        font.pixelSize: 14
-                                        color: "#333333"
-                                        verticalAlignment: Text.AlignVCenter
-                                        leftPadding: 10
-                                        elide: Text.ElideRight
-                                    }
-                                    highlighted: englishNameCombo.highlightedIndex === index
-                                }
-
-                                contentItem: Text {
-                                    leftPadding: 10
-                                    rightPadding: 30
-                                    text: {
-                                        if (englishNameCombo.currentIndex >= 0 && englishNameCombo.currentIndex < englishNameCombo.model.length) {
-                                            var item = englishNameCombo.model[englishNameCombo.currentIndex]
-                                            return item.englishName + " (" + item.chineseName + ")"
-                                        }
-                                        return ""
-                                    }
-                                    font.pixelSize: 14
-                                    color: "#333333"
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                }
-
-                                indicator: Canvas {
-                                    x: englishNameCombo.width - width - englishNameCombo.rightPadding
-                                    y: (englishNameCombo.availableHeight - height) / 2
-                                    implicitWidth: 12
-                                    implicitHeight: 8
-                                    onPaint: {
-                                        var ctx = getContext("2d")
-                                        ctx.reset()
-                                        ctx.moveTo(0, 0)
-                                        ctx.lineTo(width, 0)
-                                        ctx.lineTo(width / 2, height)
-                                        ctx.closePath()
-                                        ctx.fillStyle = "#333333"
-                                        ctx.fill()
-                                    }
-                                }
-
-                                background: Rectangle {
-                                    implicitHeight: 36
-                                    color: englishNameCombo.pressed ? "#d0d0d0" : "#e8e8e8"
-                                    border.color: "#b0b0b0"
-                                    radius: 4
-                                }
-
-                                onActivated: function(index) {
-                                    if (index >= 0 && roleListView.currentIndex >= 0) {
-                                        characterManager.updateRoleEnglishName(roleListView.currentIndex, model[index].englishName)
-                                    }
-                                }
-
-                                Connections {
-                                    target: roleListView
-                                    function onCurrentIndexChanged() {
-                                        englishNameCombo.updateSelection()
-                                    }
-                                }
-
-                                onModelChanged: {
-                                    updateSelection()
-                                }
-
-                                function updateSelection() {
-                                    if (!characterManager || roleListView.currentIndex < 0) {
-                                        currentIndex = -1
-                                        return
-                                    }
-                                    var roles = characterManager.getRoleList()
-                                    if (roleListView.currentIndex >= roles.length) {
-                                        currentIndex = -1
-                                        return
-                                    }
-                                    var en = roles[roleListView.currentIndex].englishName
-                                    if (en === "") {
-                                        currentIndex = -1
-                                        return
-                                    }
-                                    for (var i = 0; i < model.length; i++) {
-                                        if (model[i].englishName.toLowerCase() === en.toLowerCase()) {
-                                            currentIndex = i
-                                            return
-                                        }
-                                    }
-                                    currentIndex = -1
                                 }
                             }
                         }
