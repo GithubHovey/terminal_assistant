@@ -303,10 +303,7 @@ void SDCardManager::applyResources()
         emit applyFinished(false, "character目录不存在");
         return;
     }
-    if (!QDir(bootlogoSrc).exists()) {
-        emit applyFinished(false, "bootlogo目录不存在");
-        return;
-    }
+    QDir().mkpath(bootlogoSrc);
 
     Logger::instance().logInfo("开始复制资源到 sd_sysroot 并同步到SD卡...");
 
