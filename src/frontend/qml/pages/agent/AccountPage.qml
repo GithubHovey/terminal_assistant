@@ -72,7 +72,7 @@ Rectangle {
     FileDialog {
         id: avatarFileDialog
         title: "选择头像图片"
-        nameFilters: ["PNG 图片 (*.png)"]
+        nameFilters: ["图片文件 (*.png *.jpg *.jpeg)"]
         onAccepted: {
             var filePath = selectedFile.toString()
             console.log("FileDialog selected:", filePath)

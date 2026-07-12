@@ -625,7 +625,7 @@ Rectangle {
     FileDialog {
         id: coverFileDialog
         title: "选择封面图片 (可跳过)"
-        nameFilters: ["图片文件 (*.png)"]
+        nameFilters: ["图片文件 (*.png *.jpg *.jpeg)"]
         onAccepted: {
             var srcPath = selectedFile.toString()
             // 打开裁剪对话框而不是直接导入
@@ -1076,7 +1076,7 @@ Rectangle {
     FileDialog {
         id: coverChangeFileDialog
         title: "选择封面图片"
-        nameFilters: ["图片文件 (*.png)"]
+        nameFilters: ["图片文件 (*.png *.jpg *.jpeg)"]
         property int songIndex: -1
         onAccepted: {
             var srcPath = selectedFile.toString()
