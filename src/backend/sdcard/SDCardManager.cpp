@@ -290,6 +290,10 @@ void SDCardManager::applyResources()
     QString musicDst = m_sdSysrootPath + "/music";
     QString charSrc = appDir + "/character";
     QString charDst = m_sdSysrootPath + "/character";
+    QString bootlogoSrc = appDir + "/bootlogo";
+    QString bootlogoDst = m_sdSysrootPath + "/bootlogo";
+    QString configSrc = appDir + "/config.json";
+    QString configDst = m_sdSysrootPath + "/config.json";
 
     if (!QDir(musicSrc).exists()) {
         emit applyFinished(false, "music目录不存在");
@@ -299,11 +303,15 @@ void SDCardManager::applyResources()
         emit applyFinished(false, "character目录不存在");
         return;
     }
+    if (!QDir(bootlogoSrc).exists()) {
+        emit applyFinished(false, "bootlogo目录不存在");
+        return;
+    }
 
     Logger::instance().logInfo("开始复制资源到 sd_sysroot 并同步到SD卡...");
 
     QString sdSysrootPath = m_sdSysrootPath;
-    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst, sdRoot, sdSysrootPath]() -> bool {
+    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst, bootlogoSrc, bootlogoDst, configSrc, configDst, sdRoot, sdSysrootPath]() -> bool {
         QDir musicDstDir(musicDst);
         if (musicDstDir.exists()) {
             musicDstDir.removeRecursively();
@@ -312,11 +320,23 @@ void SDCardManager::applyResources()
         if (charDstDir.exists()) {
             charDstDir.removeRecursively();
         }
+        QDir bootlogoDstDir(bootlogoDst);
+        if (bootlogoDstDir.exists()) {
+            bootlogoDstDir.removeRecursively();
+        }
 
         if (!copyDirectoryRecursive(musicSrc, musicDst)) {
             return false;
         }
         if (!copyDirectoryRecursive(charSrc, charDst)) {
+            return false;
+        }
+        if (!copyDirectoryRecursive(bootlogoSrc, bootlogoDst)) {
+            return false;
+        }
+
+        QFile::remove(configDst);
+        if (!QFile::copy(configSrc, configDst)) {
             return false;
         }
 

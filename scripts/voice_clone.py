@@ -6,7 +6,7 @@ import sys
 
 
 def load_api_key():
-    config_path = os.path.join(os.getcwd(), "sd_sysroot", "config.json")
+    config_path = os.path.join(os.getcwd(), "config.json")
     if not os.path.isfile(config_path):
         print(f"Error: config.json not found: {config_path}", file=sys.stderr)
         sys.exit(1)

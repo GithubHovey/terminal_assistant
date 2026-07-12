@@ -27,7 +27,7 @@ void UserAccount::setApiKey(const QString &apiKey)
 
 QString UserAccount::configDirPath() const
 {
-    return QCoreApplication::applicationDirPath() + "/sd_sysroot";
+    return QCoreApplication::applicationDirPath();
 }
 
 QString UserAccount::configFilePath() const
