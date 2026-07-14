@@ -389,8 +389,9 @@ Rectangle {
                     anchors.fill: parent
                     source: {
                         if (!characterManager) return ""
+                        characterManager.avatarVersion
                         var path = characterManager.userAvatarPath()
-                        if (path !== "") return "file:///" + path + "?v=" + characterManager.avatarVersion
+                        if (path !== "") return "file:///" + path + "?t=" + Date.now()
                         return ""
                     }
                     fillMode: Image.PreserveAspectCrop
