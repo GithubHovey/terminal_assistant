@@ -25,6 +25,19 @@ void UserAccount::setApiKey(const QString &apiKey)
     }
 }
 
+QString UserAccount::workspaceId() const
+{
+    return m_workspaceId;
+}
+
+void UserAccount::setWorkspaceId(const QString &workspaceId)
+{
+    if (m_workspaceId != workspaceId) {
+        m_workspaceId = workspaceId;
+        emit workspaceIdChanged();
+    }
+}
+
 QString UserAccount::configDirPath() const
 {
     return QCoreApplication::applicationDirPath();
@@ -60,6 +73,9 @@ bool UserAccount::loadConfig()
     if (obj.contains("apikey")) {
         m_apiKey = obj.value("apikey").toString();
     }
+    if (obj.contains("workspace_id")) {
+        m_workspaceId = obj.value("workspace_id").toString();
+    }
 
     return true;
 }
@@ -75,6 +91,7 @@ bool UserAccount::saveConfig()
 
     QJsonObject obj;
     obj["apikey"] = m_apiKey;
+    obj["workspace_id"] = m_workspaceId;
 
     QJsonDocument doc(obj);
 

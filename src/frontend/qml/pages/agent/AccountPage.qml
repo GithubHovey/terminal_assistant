@@ -506,6 +506,66 @@ Rectangle {
             spacing: 10
             
             Text {
+                text: "Workspace-ID:"
+                font.pixelSize: 14
+                color: "#333333"
+            }
+            
+            TextField {
+                id: workspaceIdField
+                Layout.fillWidth: true
+                placeholderText: "请输入Workspace-ID"
+                font.pixelSize: 14
+                text: userAccount && userAccount.workspaceId ? userAccount.workspaceId : ""
+                visible: workspaceIdEditBtn.checked
+            }
+            
+            Text {
+                Layout.fillWidth: true
+                font.pixelSize: 14
+                color: "#333333"
+                visible: !workspaceIdEditBtn.checked
+                text: {
+                    var wid = userAccount && userAccount.workspaceId ? userAccount.workspaceId : ""
+                    if (!wid || wid.length <= 10) return wid || ""
+                    return wid.substring(0, 6) + "*".repeat(wid.length - 10) + wid.substring(wid.length - 4)
+                }
+            }
+            
+            Button {
+                id: workspaceIdEditBtn
+                text: checked ? "完成" : "编辑"
+                font.pixelSize: 14
+                checkable: true
+                checked: false
+                
+                background: Rectangle {
+                    color: parent.hovered ? "#40A9FF" : (parent.checked ? "#52C41A" : "#1890FF")
+                    radius: 4
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onCheckedChanged: {
+                    if (!checked && userAccount) {
+                        userAccount.workspaceId = workspaceIdField.text
+                        userAccount.saveConfig()
+                    }
+                }
+            }
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            
+            Text {
                 text: "获取API-KEY:"
                 font.pixelSize: 14
                 color: "#333333"

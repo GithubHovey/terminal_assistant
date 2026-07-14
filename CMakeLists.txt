@@ -47,6 +47,7 @@ set(BACKEND_HEADERS
 
 qt_add_executable(DeepSpaceAssistant
     main.cpp
+    app.rc
     ${BACKEND_SOURCES}
     ${BACKEND_HEADERS}
 )
