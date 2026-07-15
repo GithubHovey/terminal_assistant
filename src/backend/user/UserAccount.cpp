@@ -38,6 +38,48 @@ void UserAccount::setWorkspaceId(const QString &workspaceId)
     }
 }
 
+int UserAccount::motorSpeed() const
+{
+    return m_motorSpeed;
+}
+
+void UserAccount::setMotorSpeed(int speed)
+{
+    speed = qBound(0, speed, 100);
+    if (m_motorSpeed != speed) {
+        m_motorSpeed = speed;
+        emit motorSpeedChanged();
+    }
+}
+
+int UserAccount::motorTime() const
+{
+    return m_motorTime;
+}
+
+void UserAccount::setMotorTime(int time)
+{
+    time = qMax(0, time);
+    if (m_motorTime != time) {
+        m_motorTime = time;
+        emit motorTimeChanged();
+    }
+}
+
+int UserAccount::chatBgOpacity() const
+{
+    return m_chatBgOpacity;
+}
+
+void UserAccount::setChatBgOpacity(int opacity)
+{
+    opacity = qBound(0, opacity, 255);
+    if (m_chatBgOpacity != opacity) {
+        m_chatBgOpacity = opacity;
+        emit chatBgOpacityChanged();
+    }
+}
+
 QString UserAccount::configDirPath() const
 {
     if (m_basePath.isEmpty()) {
@@ -83,6 +125,15 @@ bool UserAccount::loadConfig()
     if (obj.contains("workspace_id")) {
         m_workspaceId = obj.value("workspace_id").toString();
     }
+    if (obj.contains("motor_speed")) {
+        m_motorSpeed = obj.value("motor_speed").toInt();
+    }
+    if (obj.contains("motor_time")) {
+        m_motorTime = obj.value("motor_time").toInt();
+    }
+    if (obj.contains("chat_bg_opacity")) {
+        m_chatBgOpacity = obj.value("chat_bg_opacity").toInt();
+    }
 
     return true;
 }
@@ -99,6 +150,9 @@ bool UserAccount::saveConfig()
     QJsonObject obj;
     obj["apikey"] = m_apiKey;
     obj["workspace_id"] = m_workspaceId;
+    obj["motor_speed"] = m_motorSpeed;
+    obj["motor_time"] = m_motorTime;
+    obj["chat_bg_opacity"] = m_chatBgOpacity;
 
     QJsonDocument doc(obj);
 
@@ -117,11 +171,17 @@ void UserAccount::setBasePath(const QString &path)
     m_basePath = path;
     m_apiKey.clear();
     m_workspaceId.clear();
+    m_motorSpeed = 0;
+    m_motorTime = 0;
+    m_chatBgOpacity = 255;
     if (!path.isEmpty()) {
         loadConfig();
     }
     emit apiKeyChanged();
     emit workspaceIdChanged();
+    emit motorSpeedChanged();
+    emit motorTimeChanged();
+    emit chatBgOpacityChanged();
 }
 
 QString UserAccount::basePath() const
