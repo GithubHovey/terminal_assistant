@@ -39,6 +39,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host "PyInstaller voice_clone failed!" -Foregro
 New-Item -ItemType Directory -Path "$DeployDir/python" -Force | Out-Null
 Copy-Item "scripts/dist/convert_image.exe" "$DeployDir/python/" -Force
 Copy-Item "scripts/dist/voice_clone.exe" "$DeployDir/python/" -Force
+Copy-Item "scripts/dist/ffmpeg.exe" "$DeployDir/python/" -Force
 Write-Host "python tools OK" -ForegroundColor Green
 
 Write-Host "`n========== [5/5] Copy resource directories ==========" -ForegroundColor Cyan
