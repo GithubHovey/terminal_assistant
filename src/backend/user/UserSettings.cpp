@@ -8,7 +8,7 @@ UserSettings& UserSettings::instance()
 
 UserSettings::UserSettings()
     : m_isFirstBoot(true)
-    , m_version("1.0.0")
+    , m_version("1.0.1")
 {
 }
 
