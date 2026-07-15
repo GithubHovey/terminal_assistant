@@ -23,6 +23,9 @@ public:
     Q_INVOKABLE bool loadConfig();
     Q_INVOKABLE bool saveConfig();
 
+    void setBasePath(const QString &path);
+    QString basePath() const;
+
 signals:
     void apiKeyChanged();
     void workspaceIdChanged();
@@ -30,6 +33,7 @@ signals:
 private:
     QString m_apiKey;
     QString m_workspaceId;
+    QString m_basePath;
 
     QString configDirPath() const;
     QString configFilePath() const;

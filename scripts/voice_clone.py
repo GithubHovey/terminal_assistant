@@ -12,7 +12,7 @@ def load_api_key():
         sys.exit(1)
 
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, "r", encoding="utf-8-sig") as f:
             config = json.load(f)
     except Exception as e:
         print(f"Error reading config.json: {e}", file=sys.stderr)

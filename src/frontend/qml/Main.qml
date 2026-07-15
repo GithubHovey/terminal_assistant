@@ -145,6 +145,32 @@ ApplicationWindow {
                     id: maintenancePage
                 }
             }
+
+            Rectangle {
+                visible: !sdCardManager.connected
+                anchors.fill: parent
+                color: "#E6FFFFFF"
+                z: 10
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 12
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "请先连接SD卡"
+                        font.pixelSize: 22
+                        font.bold: true
+                        color: "#999999"
+                    }
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "连接SD卡后即可编辑配置内容"
+                        font.pixelSize: 14
+                        color: "#BBBBBB"
+                    }
+                }
+            }
         }
 
         Rectangle {

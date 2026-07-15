@@ -7,6 +7,11 @@
 #include <QTimer>
 #include <QFutureWatcher>
 
+class RadioConfig;
+class CharacterManager;
+class UserAccount;
+class PythonRunner;
+
 class SDCardManager : public QObject
 {
     Q_OBJECT
@@ -31,6 +36,8 @@ public:
     Q_INVOKABLE void disconnectCard();
     Q_INVOKABLE QString formatSize(qint64 bytes) const;
     Q_INVOKABLE void applyResources();
+
+    void setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr);
 
 public slots:
     void onDeviceArrived(const QString &driveLetter);
@@ -62,6 +69,10 @@ private:
     qint64 m_cardSize;
     qint64 m_freeSpace;
     QVariantList m_availableDrives;
+    RadioConfig *m_radioConfig = nullptr;
+    CharacterManager *m_characterManager = nullptr;
+    UserAccount *m_userAccount = nullptr;
+    PythonRunner *m_pythonRunner = nullptr;
 };
 
 #endif // SDCARDMANAGER_H

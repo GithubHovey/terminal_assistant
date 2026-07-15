@@ -1,4 +1,5 @@
 #include "UserSettings.h"
+#include "version.h"
 
 UserSettings& UserSettings::instance()
 {
@@ -8,7 +9,7 @@ UserSettings& UserSettings::instance()
 
 UserSettings::UserSettings()
     : m_isFirstBoot(true)
-    , m_version("1.0.1")
+    , m_version(APP_VERSION)
 {
 }
 

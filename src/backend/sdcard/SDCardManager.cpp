@@ -1,5 +1,9 @@
 #include "SDCardManager.h"
 #include "src/backend/logger/Logger.h"
+#include "src/backend/radio/RadioConfig.h"
+#include "src/backend/character/CharacterManager.h"
+#include "src/backend/user/UserAccount.h"
+#include "src/backend/python/PythonRunner.h"
 #include <QStorageInfo>
 #include <QCoreApplication>
 #include <QDir>
@@ -196,6 +200,11 @@ bool SDCardManager::connectCard(const QString &driveLetter)
 
     m_connected = true;
 
+    if (m_radioConfig) m_radioConfig->setBasePath(m_sdSysrootPath);
+    if (m_characterManager) m_characterManager->setBasePath(m_sdSysrootPath);
+    if (m_userAccount) m_userAccount->setBasePath(m_sdSysrootPath);
+    if (m_pythonRunner) m_pythonRunner->setWorkingDirectory(m_sdSysrootPath);
+
     startConnectionMonitor();
 
     QString sizeStr = formatSize(m_cardSize);
@@ -215,8 +224,24 @@ void SDCardManager::disconnectCard()
 
     stopConnectionMonitor();
 
+    if (m_radioConfig) m_radioConfig->setBasePath("");
+    if (m_characterManager) m_characterManager->setBasePath("");
+    if (m_userAccount) m_userAccount->setBasePath("");
+    if (m_pythonRunner) m_pythonRunner->setWorkingDirectory(QCoreApplication::applicationDirPath());
+
     QString infoMsg = QString("已断开SD卡 %1").arg(m_driveLetter);
     Logger::instance().logInfo(infoMsg);
+
+    // 删除 sd_sysroot 目录
+    QString sysrootPath = m_sdSysrootPath;
+    QDir sysrootDir(sysrootPath);
+    if (sysrootDir.exists()) {
+        if (sysrootDir.removeRecursively()) {
+            Logger::instance().logInfo("已删除 sd_sysroot: " + sysrootPath);
+        } else {
+            Logger::instance().logWarning("删除 sd_sysroot 失败: " + sysrootPath);
+        }
+    }
 
     m_connected = false;
     m_driveLetter.clear();
@@ -284,59 +309,12 @@ void SDCardManager::applyResources()
         return;
     }
 
-    QString appDir = QCoreApplication::applicationDirPath();
     QString sdRoot = m_driveLetter + "/";
-    QString musicSrc = appDir + "/music";
-    QString musicDst = m_sdSysrootPath + "/music";
-    QString charSrc = appDir + "/character";
-    QString charDst = m_sdSysrootPath + "/character";
-    QString bootlogoSrc = appDir + "/bootlogo";
-    QString bootlogoDst = m_sdSysrootPath + "/bootlogo";
-    QString configSrc = appDir + "/config.json";
-    QString configDst = m_sdSysrootPath + "/config.json";
-
-    if (!QDir(musicSrc).exists()) {
-        emit applyFinished(false, "music目录不存在");
-        return;
-    }
-    if (!QDir(charSrc).exists()) {
-        emit applyFinished(false, "character目录不存在");
-        return;
-    }
-    QDir().mkpath(bootlogoSrc);
-
-    Logger::instance().logInfo("开始复制资源到 sd_sysroot 并同步到SD卡...");
-
     QString sdSysrootPath = m_sdSysrootPath;
-    QFuture<bool> future = QtConcurrent::run([musicSrc, musicDst, charSrc, charDst, bootlogoSrc, bootlogoDst, configSrc, configDst, sdRoot, sdSysrootPath]() -> bool {
-        QDir musicDstDir(musicDst);
-        if (musicDstDir.exists()) {
-            musicDstDir.removeRecursively();
-        }
-        QDir charDstDir(charDst);
-        if (charDstDir.exists()) {
-            charDstDir.removeRecursively();
-        }
-        QDir bootlogoDstDir(bootlogoDst);
-        if (bootlogoDstDir.exists()) {
-            bootlogoDstDir.removeRecursively();
-        }
 
-        if (!copyDirectoryRecursive(musicSrc, musicDst)) {
-            return false;
-        }
-        if (!copyDirectoryRecursive(charSrc, charDst)) {
-            return false;
-        }
-        if (!copyDirectoryRecursive(bootlogoSrc, bootlogoDst)) {
-            return false;
-        }
+    Logger::instance().logInfo("开始同步 sd_sysroot 到SD卡...");
 
-        QFile::remove(configDst);
-        if (!QFile::copy(configSrc, configDst)) {
-            return false;
-        }
-
+    QFuture<bool> future = QtConcurrent::run([sdRoot, sdSysrootPath]() -> bool {
         QDir sdRootDir(sdRoot);
         if (sdRootDir.exists()) {
             sdRootDir.removeRecursively();
@@ -410,4 +388,12 @@ bool SDCardManager::backupSDCardToLocal()
         }
     }
     return true;
+}
+
+void SDCardManager::setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr)
+{
+    m_radioConfig = rc;
+    m_characterManager = cm;
+    m_userAccount = ua;
+    m_pythonRunner = pr;
 }

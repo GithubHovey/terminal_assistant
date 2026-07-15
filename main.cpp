@@ -4,6 +4,7 @@
 #include <QUrl>
 #include <QQuickStyle>
 #include <QFontDatabase>
+#include "version.h"
 #include "src/backend/logger/Logger.h"
 #include "src/backend/radio/RadioConfig.h"
 #include "src/backend/character/CharacterManager.h"
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
     
     QQmlApplicationEngine engine;
     
-    engine.rootContext()->setContextProperty("appVersion", QStringLiteral("1.0.1"));
+    engine.rootContext()->setContextProperty("appVersion", QStringLiteral(APP_VERSION));
     
     RadioConfig radioConfig;
     engine.rootContext()->setContextProperty("radioConfig", &radioConfig);
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("voiceLibrary", &voiceLibrary);
     
     SDCardManager sdCardManager;
-    sdCardManager.setManagers(&radioConfig, &characterManager, &userAccount);
+    sdCardManager.setManagers(&radioConfig, &characterManager, &userAccount, &pythonRunner);
     engine.rootContext()->setContextProperty("sdCardManager", &sdCardManager);
     
     ESPFlasher espFlasher;

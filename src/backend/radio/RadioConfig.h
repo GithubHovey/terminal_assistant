@@ -45,6 +45,8 @@ public:
     Q_INVOKABLE QString importCover(const QString &srcFilePath, const QString &subDir);
     Q_INVOKABLE int coverVersion() const;
     Q_INVOKABLE void incrementCoverVersion();
+    Q_INVOKABLE void setBasePath(const QString &path);
+    Q_INVOKABLE QString basePath() const;
 
 signals:
     void songListChanged();
@@ -56,6 +58,7 @@ signals:
 private:
     QList<SongItem> m_songs;
     int m_coverVersion = 0;
+    QString m_basePath;
     QString configFilePath() const;
     void migrateFromOldFormat();
     QString ffmpegPath() const;

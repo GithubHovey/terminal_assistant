@@ -57,6 +57,9 @@ public:
     Q_INVOKABLE int chatBgVersion() const;
     Q_INVOKABLE void incrementChatBgVersion();
 
+    void setBasePath(const QString &path);
+    QString basePath() const;
+
 signals:
     void roleListChanged();
     void importError(const QString &error);
@@ -67,6 +70,7 @@ private:
     QList<RoleInfo> m_roles;
     int m_avatarVersion = 0;
     int m_chatBgVersion = 0;
+    QString m_basePath;
     QString configFilePath() const;
     int nextId() const;
     QString findEnglishNameByName(const QString &name) const;

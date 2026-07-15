@@ -17,14 +17,21 @@ CharacterManager::~CharacterManager() = default;
 
 QString CharacterManager::characterDir() const
 {
-    QString dir = QCoreApplication::applicationDirPath() + "/character";
+    if (m_basePath.isEmpty()) {
+        return QString();
+    }
+    QString dir = m_basePath + "/character";
     QDir().mkpath(dir);
     return dir;
 }
 
 QString CharacterManager::configFilePath() const
 {
-    return characterDir() + "/character_config.json";
+    QString cDir = characterDir();
+    if (cDir.isEmpty()) {
+        return QString();
+    }
+    return cDir + "/character_config.json";
 }
 
 QString CharacterManager::roleDir(const QString &name) const
@@ -476,4 +483,23 @@ void CharacterManager::incrementChatBgVersion()
 {
     m_chatBgVersion++;
     emit chatBgVersionChanged();
+}
+
+void CharacterManager::setBasePath(const QString &path)
+{
+    m_basePath = path;
+    m_roles.clear();
+    m_avatarVersion = 0;
+    m_chatBgVersion = 0;
+    if (!path.isEmpty()) {
+        loadConfig();
+    }
+    emit roleListChanged();
+    emit avatarVersionChanged();
+    emit chatBgVersionChanged();
+}
+
+QString CharacterManager::basePath() const
+{
+    return m_basePath;
 }

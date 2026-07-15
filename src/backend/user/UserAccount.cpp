@@ -40,12 +40,19 @@ void UserAccount::setWorkspaceId(const QString &workspaceId)
 
 QString UserAccount::configDirPath() const
 {
-    return QCoreApplication::applicationDirPath();
+    if (m_basePath.isEmpty()) {
+        return QString();
+    }
+    return m_basePath;
 }
 
 QString UserAccount::configFilePath() const
 {
-    return configDirPath() + "/config.json";
+    QString dir = configDirPath();
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/config.json";
 }
 
 bool UserAccount::loadConfig()
@@ -103,4 +110,21 @@ bool UserAccount::saveConfig()
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
     return true;
+}
+
+void UserAccount::setBasePath(const QString &path)
+{
+    m_basePath = path;
+    m_apiKey.clear();
+    m_workspaceId.clear();
+    if (!path.isEmpty()) {
+        loadConfig();
+    }
+    emit apiKeyChanged();
+    emit workspaceIdChanged();
+}
+
+QString UserAccount::basePath() const
+{
+    return m_basePath;
 }

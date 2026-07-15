@@ -578,6 +578,9 @@ Rectangle {
 
     Connections {
         target: radioConfig
+        function onSongListChanged() {
+            syncModelFromBackend()
+        }
         function onImportStarted() {
             importBusyIndicator.running = true
             importBusyDialog.open()

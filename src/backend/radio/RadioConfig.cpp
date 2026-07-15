@@ -43,7 +43,11 @@ RadioConfig::~RadioConfig() = default;
 
 QString RadioConfig::configFilePath() const
 {
-    return musicDir() + "/radio_config.json";
+    QString mDir = musicDir();
+    if (mDir.isEmpty()) {
+        return QString();
+    }
+    return mDir + "/radio_config.json";
 }
 
 bool RadioConfig::loadConfig()
@@ -313,7 +317,10 @@ void RadioConfig::reindex()
 
 QString RadioConfig::musicDir() const
 {
-    QString dir = QCoreApplication::applicationDirPath() + "/music";
+    if (m_basePath.isEmpty()) {
+        return QString();
+    }
+    QString dir = m_basePath + "/music";
     QDir().mkpath(dir);
     return dir;
 }
@@ -448,6 +455,23 @@ void RadioConfig::incrementCoverVersion()
 {
     m_coverVersion++;
     emit coverVersionChanged();
+}
+
+void RadioConfig::setBasePath(const QString &path)
+{
+    m_basePath = path;
+    m_songs.clear();
+    m_coverVersion = 0;
+    if (!path.isEmpty()) {
+        loadConfig();
+    }
+    emit songListChanged();
+    emit coverVersionChanged();
+}
+
+QString RadioConfig::basePath() const
+{
+    return m_basePath;
 }
 
 QString RadioConfig::ffmpegPath() const
