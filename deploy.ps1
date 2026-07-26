@@ -53,10 +53,8 @@ New-Item -ItemType Directory -Path "$DeployDir/materials" -Force | Out-Null
 Copy-Item "$BuildDir/materials/option.json" "$DeployDir/materials/" -Force
 Write-Host "Copied materials/option.json" -ForegroundColor Green
 
-if (Test-Path "$BuildDir/bootlogo") {
-    Copy-Item "$BuildDir/bootlogo" "$DeployDir/" -Recurse -Force
-    Write-Host "Copied bootlogo/" -ForegroundColor Green
-}
+New-Item -ItemType Directory -Path "$DeployDir/bootlogo" -Force | Out-Null
+Write-Host "Created empty bootlogo/" -ForegroundColor Green
 
 New-Item -ItemType Directory -Path "$DeployDir/character" -Force | Out-Null
 '{"roles":[]}' | Out-File -FilePath "$DeployDir/character/character_config.json" -Encoding utf8

@@ -22,6 +22,13 @@ SDCardManager::SDCardManager(QObject *parent)
     , m_cardSize(0)
     , m_freeSpace(0)
 {
+    QString sysrootPath = QCoreApplication::applicationDirPath() + "/sd_sysroot";
+    QDir sysrootDir(sysrootPath);
+    if (sysrootDir.exists()) {
+        sysrootDir.removeRecursively();
+        Logger::instance().logInfo("已清理残留的 sd_sysroot 目录");
+    }
+
     m_connTimer->setSingleShot(false);
     connect(m_connTimer, &QTimer::timeout, this, &SDCardManager::checkConnection);
 
