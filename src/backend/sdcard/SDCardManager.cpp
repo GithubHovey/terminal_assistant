@@ -4,6 +4,7 @@
 #include "src/backend/character/CharacterManager.h"
 #include "src/backend/user/UserAccount.h"
 #include "src/backend/python/PythonRunner.h"
+#include "src/backend/basic/BasicConfig.h"
 #include <QStorageInfo>
 #include <QCoreApplication>
 #include <QDir>
@@ -204,6 +205,7 @@ bool SDCardManager::connectCard(const QString &driveLetter)
     if (m_characterManager) m_characterManager->setBasePath(m_sdSysrootPath);
     if (m_userAccount) m_userAccount->setBasePath(m_sdSysrootPath);
     if (m_pythonRunner) m_pythonRunner->setWorkingDirectory(m_sdSysrootPath);
+    if (m_basicConfig) m_basicConfig->setBasePath(m_sdSysrootPath);
 
     startConnectionMonitor();
 
@@ -228,6 +230,7 @@ void SDCardManager::disconnectCard()
     if (m_characterManager) m_characterManager->setBasePath("");
     if (m_userAccount) m_userAccount->setBasePath("");
     if (m_pythonRunner) m_pythonRunner->setWorkingDirectory(QCoreApplication::applicationDirPath());
+    if (m_basicConfig) m_basicConfig->setBasePath("");
 
     QString infoMsg = QString("已断开SD卡 %1").arg(m_driveLetter);
     Logger::instance().logInfo(infoMsg);
@@ -315,20 +318,13 @@ void SDCardManager::applyResources()
 
     Logger::instance().logInfo("开始同步 sd_sysroot 到SD卡...");
 
-    QFuture<bool> future = QtConcurrent::run([sdRoot, sdSysrootPath, appDir]() -> bool {
+    QFuture<bool> future = QtConcurrent::run([sdRoot, sdSysrootPath]() -> bool {
         QDir sdRootDir(sdRoot);
         if (sdRootDir.exists()) {
             sdRootDir.removeRecursively();
         }
         if (!copyDirectoryRecursive(sdSysrootPath, sdRoot)) {
             return false;
-        }
-        QString bootlogoSrc = appDir + "/bootlogo";
-        if (QDir(bootlogoSrc).exists()) {
-            Logger::instance().logInfo("拷贝 bootlogo 到SD卡...");
-            if (!copyDirectoryRecursive(bootlogoSrc, sdRoot + "bootlogo")) {
-                return false;
-            }
         }
         return true;
     });
@@ -398,10 +394,11 @@ bool SDCardManager::backupSDCardToLocal()
     return true;
 }
 
-void SDCardManager::setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr)
+void SDCardManager::setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr, BasicConfig *bc)
 {
     m_radioConfig = rc;
     m_characterManager = cm;
     m_userAccount = ua;
     m_pythonRunner = pr;
+    m_basicConfig = bc;
 }

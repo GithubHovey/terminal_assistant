@@ -34,7 +34,21 @@ void BasicConfig::setConfig(const QVariantMap &config)
 
 QString BasicConfig::bootlogoPath() const
 {
-    return QCoreApplication::applicationDirPath() + "/bootlogo/bootlogo.gif";
+    if (m_basePath.isEmpty()) {
+        return QString();
+    }
+    return m_basePath + "/bootlogo/bootlogo.gif";
+}
+
+void BasicConfig::setBasePath(const QString &path)
+{
+    m_basePath = path;
+    emit bootlogoPathChanged();
+}
+
+QString BasicConfig::basePath() const
+{
+    return m_basePath;
 }
 
 bool BasicConfig::replaceBootlogo(const QString &srcPath, double offsetX, double offsetY, double scale, bool speedUp)
@@ -49,8 +63,13 @@ bool BasicConfig::replaceBootlogo(const QString &srcPath, double offsetX, double
         return false;
     }
 
+    if (m_basePath.isEmpty()) {
+        Logger::instance().logError("basePath 未设置");
+        return false;
+    }
+
     QString appDir = QCoreApplication::applicationDirPath();
-    QString bootlogoDir = appDir + "/bootlogo";
+    QString bootlogoDir = m_basePath + "/bootlogo";
     QString outputPath = bootlogoDir + "/bootlogo.gif";
     QString ffmpegPath = appDir + "/python/ffmpeg.exe";
 

@@ -20,6 +20,8 @@ public:
     Q_INVOKABLE bool replaceBootlogo(const QString &srcPath, double offsetX, double offsetY, double scale, bool speedUp);
 
     QString bootlogoPath() const;
+    void setBasePath(const QString &path);
+    QString basePath() const;
 
 signals:
     void configLoaded();
@@ -29,6 +31,7 @@ signals:
 
 private:
     QVariantMap m_config;
+    QString m_basePath;
 };
 
 #endif // BASICCONFIG_H

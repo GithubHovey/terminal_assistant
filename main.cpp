@@ -54,15 +54,15 @@ int main(int argc, char *argv[])
     voiceLibrary.loadConfig();
     engine.rootContext()->setContextProperty("voiceLibrary", &voiceLibrary);
     
+    BasicConfig basicConfig;
+    engine.rootContext()->setContextProperty("basicConfig", &basicConfig);
+    
     SDCardManager sdCardManager;
-    sdCardManager.setManagers(&radioConfig, &characterManager, &userAccount, &pythonRunner);
+    sdCardManager.setManagers(&radioConfig, &characterManager, &userAccount, &pythonRunner, &basicConfig);
     engine.rootContext()->setContextProperty("sdCardManager", &sdCardManager);
     
     ESPFlasher espFlasher;
     engine.rootContext()->setContextProperty("espFlasher", &espFlasher);
-    
-    BasicConfig basicConfig;
-    engine.rootContext()->setContextProperty("basicConfig", &basicConfig);
     
     DeviceEventFilter deviceFilter;
     app.installNativeEventFilter(&deviceFilter);

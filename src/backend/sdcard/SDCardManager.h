@@ -11,6 +11,7 @@ class RadioConfig;
 class CharacterManager;
 class UserAccount;
 class PythonRunner;
+class BasicConfig;
 
 class SDCardManager : public QObject
 {
@@ -37,7 +38,7 @@ public:
     Q_INVOKABLE QString formatSize(qint64 bytes) const;
     Q_INVOKABLE void applyResources();
 
-    void setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr);
+    void setManagers(RadioConfig *rc, CharacterManager *cm, UserAccount *ua, PythonRunner *pr, BasicConfig *bc);
 
 public slots:
     void onDeviceArrived(const QString &driveLetter);
@@ -73,6 +74,7 @@ private:
     CharacterManager *m_characterManager = nullptr;
     UserAccount *m_userAccount = nullptr;
     PythonRunner *m_pythonRunner = nullptr;
+    BasicConfig *m_basicConfig = nullptr;
 };
 
 #endif // SDCARDMANAGER_H

@@ -6,7 +6,12 @@ import QtQuick.Dialogs
 Rectangle {
     id: root
     color: "#FFFFFF"
-    property string previewSource: basicConfig ? "file:///" + basicConfig.bootlogoPath.replace(/\\/g, "/") + "?t=" + Date.now() : ""
+    property string previewSource: {
+        if (!basicConfig || !basicConfig.bootlogoPath || basicConfig.bootlogoPath === "") {
+            return ""
+        }
+        return "file:///" + basicConfig.bootlogoPath.replace(/\\/g, "/") + "?t=" + Date.now()
+    }
 
     Dialog {
         id: cropDialog
