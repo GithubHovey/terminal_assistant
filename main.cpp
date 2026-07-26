@@ -15,6 +15,7 @@
 #include "src/backend/sdcard/SDCardManager.h"
 #include "src/backend/sdcard/DeviceEventFilter.h"
 #include "src/backend/maintenance/ESPFlasher.h"
+#include "src/backend/basic/BasicConfig.h"
 
 using namespace Qt::StringLiterals;
 
@@ -59,6 +60,9 @@ int main(int argc, char *argv[])
     
     ESPFlasher espFlasher;
     engine.rootContext()->setContextProperty("espFlasher", &espFlasher);
+    
+    BasicConfig basicConfig;
+    engine.rootContext()->setContextProperty("basicConfig", &basicConfig);
     
     DeviceEventFilter deviceFilter;
     app.installNativeEventFilter(&deviceFilter);

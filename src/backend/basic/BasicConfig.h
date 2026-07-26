@@ -7,6 +7,7 @@
 class BasicConfig : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString bootlogoPath READ bootlogoPath NOTIFY bootlogoPathChanged)
 
 public:
     explicit BasicConfig(QObject *parent = nullptr);
@@ -16,11 +17,15 @@ public:
     Q_INVOKABLE bool saveConfig();
     Q_INVOKABLE QVariantMap getConfig() const;
     Q_INVOKABLE void setConfig(const QVariantMap &config);
+    Q_INVOKABLE bool replaceBootlogo(const QString &srcPath, double offsetX, double offsetY, double scale, bool speedUp);
+
+    QString bootlogoPath() const;
 
 signals:
     void configLoaded();
     void configSaved();
     void configError(const QString &error);
+    void bootlogoPathChanged();
 
 private:
     QVariantMap m_config;
