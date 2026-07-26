@@ -311,16 +311,24 @@ void SDCardManager::applyResources()
 
     QString sdRoot = m_driveLetter + "/";
     QString sdSysrootPath = m_sdSysrootPath;
+    QString appDir = QCoreApplication::applicationDirPath();
 
     Logger::instance().logInfo("开始同步 sd_sysroot 到SD卡...");
 
-    QFuture<bool> future = QtConcurrent::run([sdRoot, sdSysrootPath]() -> bool {
+    QFuture<bool> future = QtConcurrent::run([sdRoot, sdSysrootPath, appDir]() -> bool {
         QDir sdRootDir(sdRoot);
         if (sdRootDir.exists()) {
             sdRootDir.removeRecursively();
         }
         if (!copyDirectoryRecursive(sdSysrootPath, sdRoot)) {
             return false;
+        }
+        QString bootlogoSrc = appDir + "/bootlogo";
+        if (QDir(bootlogoSrc).exists()) {
+            Logger::instance().logInfo("拷贝 bootlogo 到SD卡...");
+            if (!copyDirectoryRecursive(bootlogoSrc, sdRoot + "bootlogo")) {
+                return false;
+            }
         }
         return true;
     });
