@@ -147,7 +147,7 @@ ApplicationWindow {
             }
 
             Rectangle {
-                visible: !sdCardManager.connected
+                visible: !sdCardManager.connected && tabBar.currentIndex !== 3
                 anchors.fill: parent
                 color: "#E6FFFFFF"
                 z: 10

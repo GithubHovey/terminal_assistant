@@ -13,7 +13,7 @@ public:
     ~MaintenanceManager() override;
 
     Q_INVOKABLE bool diagnose();
-    Q_INVOKABLE bool exportLogs(const QString &destination);
+    Q_INVOKABLE bool exportLogs(const QString &logContent, const QString &destination);
     Q_INVOKABLE bool importLogs(const QString &source);
 
 signals:

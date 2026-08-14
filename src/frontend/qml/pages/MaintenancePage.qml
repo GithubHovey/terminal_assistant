@@ -51,20 +51,38 @@ Rectangle {
         }
     }
 
-    Flickable {
+    FileDialog {
+        id: exportLogDialog
+        title: "导出日志到文件"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["Text files (*.txt)", "Log files (*.log)", "All files (*)"]
+        currentFile: "file:///" + "maintenance_log_" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + ".txt"
+        onAccepted: {
+            var filePath = selectedFile.toString().replace("file:///", "")
+            if (maintenanceManager.exportLogs(logArea.text, filePath)) {
+                logger.logInfo("日志已导出到: " + filePath)
+            }
+        }
+    }
+
+    ColumnLayout {
+        id: mainColumn
         anchors.fill: parent
-        contentHeight: mainColumn.height
-        clip: true
+        spacing: 12
+        anchors.margins: 16
 
-        ColumnLayout {
-            id: mainColumn
-            width: parent.width
-            spacing: 12
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: 16
+        Flickable {
+            id: topFlickable
+            Layout.fillWidth: true
+            Layout.preferredHeight: topColumn.implicitHeight
+            contentHeight: topColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-            Item { Layout.preferredHeight: 8 }
+            ColumnLayout {
+                id: topColumn
+                width: parent.width
+                spacing: 12
 
             Rectangle {
                 Layout.fillWidth: true
@@ -607,11 +625,13 @@ Rectangle {
                     }
                 }
             }
+            }
+        }
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: 200
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 150
                 radius: 8
                 color: "#FFFFFF"
 
@@ -652,6 +672,32 @@ Rectangle {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: logArea.text = ""
+                        }
+
+                        Button {
+                            text: "导出日志"
+                            font.pixelSize: 13
+                            Layout.preferredHeight: 28
+                            Layout.preferredWidth: 80
+                            enabled: logArea.text.length > 0
+
+                            background: Rectangle {
+                                color: {
+                                    if (!parent.enabled) return "#F5F5F5"
+                                    return parent.hovered ? "#E6F7FF" : "#F0F0F0"
+                                }
+                                border.width: 1
+                                border.color: "#D9D9D9"
+                                radius: 4
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                font: parent.font
+                                color: parent.enabled ? "#333333" : "#BFBFBF"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: exportLogDialog.open()
                         }
                     }
 
@@ -695,9 +741,6 @@ Rectangle {
                     }
                 }
             }
-
-            Item { Layout.preferredHeight: 8 }
-        }
     }
 
     Dialog {

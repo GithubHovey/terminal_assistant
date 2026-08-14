@@ -1,4 +1,7 @@
 #include "MaintenanceManager.h"
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
 
 MaintenanceManager::MaintenanceManager(QObject *parent)
     : QObject(parent)
@@ -12,10 +15,20 @@ bool MaintenanceManager::diagnose()
     return false;
 }
 
-bool MaintenanceManager::exportLogs(const QString &destination)
+bool MaintenanceManager::exportLogs(const QString &logContent, const QString &destination)
 {
-    Q_UNUSED(destination);
-    return false;
+    QFile file(destination);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        emit error("无法创建文件: " + file.errorString());
+        return false;
+    }
+    
+    QTextStream out(&file);
+    out << logContent;
+    file.close();
+    
+    emit logExported(destination);
+    return true;
 }
 
 bool MaintenanceManager::importLogs(const QString &source)
